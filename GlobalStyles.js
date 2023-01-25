@@ -1,0 +1,82 @@
+import { StyleSheet } from "react-native";
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sendHoursContainer: {
+    flex: 1,
+    paddingTop: 40,
+    paddingHorizontal: 20,
+    // alignItems: "center",
+    // justifyContent: "center",
+  },
+  itemStyle: {
+    marginTop: 24,
+    padding: 30,
+    backgroundColor: "pink",
+    fontSize: 24,
+  },
+  itemStyleSmall: {
+    fontSize: 14,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "black",
+    padding: 8,
+    // margin: 100,
+    width: 80,
+    // color: "white",
+    fontSize: 20,
+    marginBottom: 30,
+  },
+  noteInput: {
+    borderWidth: 1,
+    borderColor: "black",
+    padding: 8,
+    // margin: 100,
+    width: 250,
+    // color: "white",
+    fontSize: 25,
+  },
+  button: {
+    // borderWidth: 1,
+    marginTop: 30,
+    fontSize: 20,
+    borderRadius: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 45,
+    backgroundColor: "lightgreen",
+    // borderColor: "black",
+    // marginBottom: 160,
+  },
+  buttonSendHours: {
+    // borderWidth: 1,
+    marginTop: 5,
+    marginBottom: 5,
+    fontSize: 20,
+    borderRadius: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    backgroundColor: "lightgreen",
+    alignItems: "center",
+    justifyContent: "center",
+    // borderColor: "black",
+  },
+  modal: {
+    backgroundColor: "white",
+    borderRadius: 10,
+  },
+  optionOutsideArray: {
+    alignItems: "center",
+  },
+  timePickerTextInside: {
+    marginHorizontal: 20,
+    // alignItems: "center",
+    marginVertical: 20,
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+});
