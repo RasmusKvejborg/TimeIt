@@ -1,7 +1,6 @@
 import React from "react";
 import { styles } from "./GlobalStyles.js";
 import {
-  StyleSheet,
   Text,
   View,
   TouchableOpacity,

@@ -17,16 +17,30 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { ModalTimePicker } from "../../ModalTimePicker.js";
 
 export default function HomeScreen({ navigation }) {
-  // --- constans for timePicking (custom modal) ---
+  // --- constants for timePicking (custom modal) ---
   const [isModalVisible, setIsModalVisible] = React.useState(false);
-  const [chooseTime, setChooseTime] = React.useState();
-  const changeModalVisibility = (bool) => {
+  const [chooseStartTime, setChooseStartTime] = React.useState();
+  const [chooseEndTime, setChooseEndTime] = React.useState();
+  const [startOrEndTimeSelected, setSstartOrEndTimeSelected] = React.useState();
+
+  // const changeStartOrEndTimeSelected = (value) => {
+  //   setIsModalVisible(value);
+  // };
+
+  const changeModalVisibility = (bool, value) => {
     setIsModalVisible(bool);
+    setSstartOrEndTimeSelected(value);
   };
   const setTimeData = (option) => {
-    setChooseTime(option);
+    startOrEndTimeSelected === "endTime" && setChooseEndTime(option);
+    startOrEndTimeSelected === "startTime" && setChooseStartTime(option);
   };
   //  ----------------- end of timePicking ---------------------
+  const [noteText, setNoteText] = React.useState();
+
+  const changeNoteHandler = (val) => {
+    setNoteText(val);
+  };
 
   //------------------------- all below is for date picking ----------------
   const [date, setDate] = React.useState(new Date());
@@ -66,16 +80,25 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <Text>This is the HomeScreen!</Text>
       <StatusBar style="auto" />
-
+      {/* --------------------------- time picker: Start time ------------------------------ */}
       <Text>Enter start time</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={(text) => (this.startTime1 = text)}
-      />
+      <TouchableOpacity
+        onPress={() => changeModalVisibility(true, "startTime")}
+      >
+        <Text style={styles.input}>{chooseStartTime}</Text>
+      </TouchableOpacity>
 
-      {/* --------------------------- time picker ------------------------------ */}
-      <TouchableOpacity onPress={() => changeModalVisibility(true)}>
-        <Text style={styles.input}>{chooseTime}</Text>
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isModalVisible}
+        nRequestClose={() => changeModalVisibility(false)}
+      ></Modal>
+      {/* --------------------------- time picker: End time ------------------------------ */}
+
+      <Text>Enter end time</Text>
+      <TouchableOpacity onPress={() => changeModalVisibility(true, "endTime")}>
+        <Text style={styles.input}>{chooseEndTime}</Text>
       </TouchableOpacity>
 
       <Modal
@@ -114,7 +137,7 @@ export default function HomeScreen({ navigation }) {
             const currentDate = selectedDate || date;
             setDate(currentDate);
             let tempDate = new Date(currentDate);
-            let fDate = tempDate.getDate() + "/" + tempDate.getMonth() + 1;
+            let fDate = tempDate.getDate() + "/" + (tempDate.getMonth() + 1);
 
             setDateText(fDate);
           }}
@@ -128,22 +151,23 @@ export default function HomeScreen({ navigation }) {
           this.textInput = input;
         }}
         style={styles.noteInput}
-        onChangeText={(text) => (this.note1 = text)}
+        onChangeText={(text) => changeNoteHandler(text)}
       />
 
       <TouchableOpacity // submit button
         onPress={() => {
           Keyboard.dismiss();
-          var startTime = String(this.startTime1);
-          var endTime = String(this.endTime1);
+          var startTime = chooseStartTime;
+          var endTime = chooseEndTime;
           var dateTime = JSON.stringify(date);
-          var note = String(this.note1);
+          var note = noteText;
 
           if (startTime === "undefined") {
             // if noting has been typed into starttime. === null didnt work so I went for ==="undefined"
             Alert.alert("Please fill out all required fields ");
           } else {
             this.textInput.clear();
+            setNoteText("");
             var registration = new Registration(
               startTime,
               endTime,

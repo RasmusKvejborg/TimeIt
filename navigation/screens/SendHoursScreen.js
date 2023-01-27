@@ -26,7 +26,10 @@ export default function SendHoursScreen({ navigation }) {
   };
 
   React.useEffect(() => {
-    fetchValues();
+    // fetchValues();
+    return navigation.addListener("focus", () => {
+      fetchValues();
+    });
   }, []);
 
   const deleteList = async () => {
@@ -73,9 +76,12 @@ export default function SendHoursScreen({ navigation }) {
           return (
             <View key={pos}>
               <Text style={styles.itemStyle}>
-                Start: {item.startTime} {"\t"}End: {item.endTime}
-                {"\n"}Date: {formattedDate}
-                {item.note !== "undefined" && ( // && means if true then return text
+                {item.startTime}
+                {"\t"}-{"\t"}
+                {item.endTime}
+                {"\n"}
+                {formattedDate}
+                {item.note && ( // && means if truthy then return text
                   <Text style={styles.itemStyleSmall}>
                     {"\n"}Note: {item.note}
                   </Text>
