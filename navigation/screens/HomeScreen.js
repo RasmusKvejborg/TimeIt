@@ -57,7 +57,9 @@ export default function HomeScreen({ navigation }) {
   const [mode, setMode] = React.useState("date"); // could be just default
   const [show, setShow] = React.useState(false);
   const [dateText, setDateText] = React.useState(
-    new Date().getDate() + "/" + (new Date().getMonth() + 1)
+    String("0" + new Date().getDate()).slice(-2) +
+      "/" +
+      String("0" + (new Date().getMonth() + 1)).slice(-2)
   );
 
   const showMode = (currentMode) => {
@@ -86,7 +88,7 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // --------------- return() ------------------------
+  // -////////////////////////////////////////////////////////////////////-------------- return() ----------------------//////////////////////////////////////////////////////--
   return (
     <View style={styles.container}>
       <Snackbar
@@ -99,14 +101,18 @@ export default function HomeScreen({ navigation }) {
         Registration saved. See your registrations in 'Check & Send'
       </Snackbar>
 
-      <Text>This is the HomeScreen!</Text>
+      {/* <Text>This is the HomeScreen!</Text> */}
       <StatusBar style="auto" />
       {/* --------------------------- time picker: Start time ------------------------------ */}
-      <Text>Enter start time</Text>
+      {/* <Text>Enter start time</Text> */}
       <TouchableOpacity
         onPress={() => changeModalVisibility(true, "startTime")}
       >
-        <Text style={styles.input}>{chooseStartTime}</Text>
+        <View pointerEvents="none">
+          <TextInput placeholder="Select start time" style={styles.input}>
+            {chooseStartTime}
+          </TextInput>
+        </View>
       </TouchableOpacity>
 
       <Modal
@@ -117,9 +123,13 @@ export default function HomeScreen({ navigation }) {
       ></Modal>
       {/* --------------------------- time picker: End time ------------------------------ */}
 
-      <Text>Enter end time</Text>
+      {/* <Text>Enter end time</Text> */}
       <TouchableOpacity onPress={() => changeModalVisibility(true, "endTime")}>
-        <Text style={styles.input}>{chooseEndTime}</Text>
+        <View pointerEvents="none">
+          <TextInput placeholder="Select end time" style={styles.input}>
+            {chooseEndTime}
+          </TextInput>
+        </View>
       </TouchableOpacity>
 
       <Modal
@@ -135,7 +145,7 @@ export default function HomeScreen({ navigation }) {
       </Modal>
 
       {/* ------------------------- datepicker --------------------------------------- */}
-      <Text>Select date</Text>
+      {/* <Text>Select date</Text> */}
       <TouchableOpacity
         onPress={() => {
           showMode("date"); // this opens the datepicker                                 |
@@ -155,10 +165,13 @@ export default function HomeScreen({ navigation }) {
           display="default"
           onChange={(event, selectedDate) => {
             setShow(false);
-            const currentDate = selectedDate || date;
-            setDate(currentDate);
-            let tempDate = new Date(currentDate);
-            let fDate = tempDate.getDate() + "/" + (tempDate.getMonth() + 1);
+            const chosenDate = selectedDate || date;
+            setDate(chosenDate);
+            let tempDate = new Date(chosenDate);
+            let fDate =
+              String("0" + tempDate.getDate()).slice(-2) +
+              "/" +
+              String("0" + (tempDate.getMonth() + 1)).slice(-2); // old way: tempDate.getDate() + "/" + (tempDate.getMonth() + 1);
 
             setDateText(fDate);
           }}
@@ -166,12 +179,13 @@ export default function HomeScreen({ navigation }) {
       )}
       {/* ----------------------- end of datepicker ----------------------------------- */}
 
-      <Text>Note (optional)</Text>
+      {/* <Text>Note (optional)</Text> */}
       <TextInput
+        placeholder="Note (optional)"
         ref={(input) => {
           this.textInput = input;
         }}
-        style={styles.noteInput}
+        style={styles.input}
         onChangeText={(text) => changeNoteHandler(text)}
       />
 

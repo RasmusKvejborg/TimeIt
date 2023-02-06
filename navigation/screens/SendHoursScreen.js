@@ -97,7 +97,7 @@ export default function SendHoursScreen({ navigation }) {
             if (xAppSecretToken === undefined) {
               Alert.alert(
                 "Connect to e-conomic",
-                "Log into your (or your boss') e-conomc account",
+                "Before you can send data, you need to log into your (or your boss') e-conomc account.",
                 // "Forbind appen tilco e-conomic",
                 // "Log ind på din (eller din chefs) e-conomic konto",
 
@@ -121,6 +121,7 @@ export default function SendHoursScreen({ navigation }) {
               );
             } else {
               onToggleSnackBar();
+
               // all sent registrations should also be greyed out or something and into the bottom...
             }
           }}
