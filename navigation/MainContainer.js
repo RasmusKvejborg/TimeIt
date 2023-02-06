@@ -24,6 +24,10 @@ export default function MainContainer() {
         initialRouteName={homeScreenName}
         screenOptions={({ route }) => ({
           headerShown: false,
+          tabBarActiveTintColor: "#3F72AF",
+          tabBarLabelStyle: { paddingBottom: 2, fontSize: 16 },
+          tabBarStyle: { height: 70 },
+
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
             let routeName = route.name;
@@ -41,7 +45,7 @@ export default function MainContainer() {
             }
 
             return (
-              <Ionicons name={iconName} size={size} color={color}></Ionicons>
+              <Ionicons name={iconName} size={32} color={color}></Ionicons>
             );
           },
         })}

@@ -70,7 +70,7 @@ const ModalTimePicker = (props) => {
           styles.modal,
           {
             alignItems: "center",
-            height: HEIGHT - 20,
+            height: HEIGHT,
           },
         ]}
       >
