@@ -2,9 +2,10 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    // justifyContent: "center",
+    // top: 50,
   },
   sendHoursContainer: {
     flex: 1,
@@ -27,6 +28,7 @@ export const styles = StyleSheet.create({
     borderColor: "black",
     padding: 8,
     // margin: 100,
+    // alignItems: "flex-start", // - why doesnt this work?
     width: 80,
     // color: "white",
     fontSize: 20,
@@ -73,10 +75,18 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   timePickerTextInside: {
-    marginHorizontal: 20,
+    marginHorizontal: 15,
     // alignItems: "center",
     marginVertical: 20,
     fontSize: 20,
     fontWeight: "bold",
+  },
+  snackBar: {
+    position: "absolute",
+    width: "100%",
+    bottom: 40,
+    height: 70,
+    // // alignItems: "baseline",
+    // justifyContent: "flex-end",
   },
 });

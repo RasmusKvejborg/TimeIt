@@ -1,20 +1,27 @@
 import * as React from "react";
-import { View, Text, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Linking,
+} from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Snackbar } from "react-native-paper";
 
 export default function SendHoursScreen({ navigation }) {
   const [data, setData] = React.useState([]);
+  const [xAppSecretToken, setXAppSecretToken] = React.useState();
 
-  // const [registrations, setRegistrations] = React.useState([
-  //   { startTime: "7777", endTime: "8888", key: "1" },
-  //   { startTime: "8888", endTime: "9999", key: "2" },
-  //   { startTime: "7777", endTime: "8888", key: "3" },
-  //   { startTime: "8888", endTime: "9999", key: "4" },
-  //   { startTime: "7777", endTime: "8888", key: "5" },
-  //   { startTime: "8888", endTime: "9999", key: "6" },
-  //   { startTime: "7777", endTime: "8888", key: "7" },
-  // ]);
+  // -------------------- consts for snackBar -------------------------------
+  const [snackBarVisible, setSnackBarVisible] = React.useState(false);
+
+  const onToggleSnackBar = () => setSnackBarVisible(!snackBarVisible);
+
+  const onDismissSnackBar = () => setSnackBarVisible(false);
+  // ---------------------------------------------------
 
   const fetchValues = () => {
     AsyncStorage.getItem("@registration").then((_data) => {
@@ -66,18 +73,11 @@ export default function SendHoursScreen({ navigation }) {
             .split("-")
             .reverse()
             .join("/");
-
-          // showNoteIfThereIsAny(){
-          //   if(item.note!="undefined"){
-
-          //   }
-          // }
-
           return (
             <View key={pos}>
               <Text style={styles.itemStyle}>
                 {item.startTime}
-                {"\t"}-{"\t"}
+                {"\t"}- {"\t"}
                 {item.endTime}
                 {"\n"}
                 {formattedDate}
@@ -92,10 +92,52 @@ export default function SendHoursScreen({ navigation }) {
         })}
       </ScrollView>
       <View>
-        <Text style={styles.buttonSendHours}>
-          Send selected hours to e-conomic
-        </Text>
+        <TouchableOpacity
+          onPress={() => {
+            if (xAppSecretToken === undefined) {
+              Alert.alert(
+                "Connect to e-conomic",
+                "Log into your (or your boss') e-conomc account",
+                // "Forbind appen tilco e-conomic",
+                // "Log ind på din (eller din chefs) e-conomic konto",
+
+                [
+                  {
+                    text: "Cancel",
+                    onPress: () => {
+                      console.log("cancel has been pressed");
+                    },
+                  },
+                  {
+                    text: "Open e-conomic", // "Åbn e-conomic"
+                    onPress: () => {
+                      console.log("jafeoifjase");
+                      Linking.openURL(
+                        "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=SN1I9SSkjskcoRLZhGjjuMJxQ9thLkOCTbf3rDYrHfY1"
+                      );
+                    },
+                  },
+                ]
+              );
+            } else {
+              onToggleSnackBar();
+              // all sent registrations should also be greyed out or something and into the bottom...
+            }
+          }}
+        >
+          <Text style={styles.buttonSendHours}>
+            Send selected hours to e-conomic
+          </Text>
+        </TouchableOpacity>
       </View>
+      <Snackbar
+        visible={snackBarVisible}
+        duration={4000}
+        onDismiss={onDismissSnackBar}
+        action={{ label: "Close" }}
+      >
+        Registrations sent to e-conomic.
+      </Snackbar>
     </View>
   );
 }

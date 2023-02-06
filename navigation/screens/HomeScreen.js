@@ -9,14 +9,29 @@ import {
   Alert,
   Keyboard,
   Modal,
+  SafeAreaView,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import { Registration } from "../../RegistrationClass.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ModalTimePicker } from "../../ModalTimePicker.js";
+import { Snackbar } from "react-native-paper";
 
 export default function HomeScreen({ navigation }) {
+  const [noteText, setNoteText] = React.useState();
+
+  const changeNoteHandler = (val) => {
+    setNoteText(val);
+  };
+
+  // -------------------- consts for snackBar -------------------------------
+  const [snackBarVisible, setSnackBarVisible] = React.useState(false);
+
+  const onToggleSnackBar = () => setSnackBarVisible(!snackBarVisible);
+
+  const onDismissSnackBar = () => setSnackBarVisible(false);
+
   // --- constants for timePicking (custom modal) ---
   const [isModalVisible, setIsModalVisible] = React.useState(false);
   const [chooseStartTime, setChooseStartTime] = React.useState();
@@ -36,18 +51,13 @@ export default function HomeScreen({ navigation }) {
     startOrEndTimeSelected === "startTime" && setChooseStartTime(option);
   };
   //  ----------------- end of timePicking ---------------------
-  const [noteText, setNoteText] = React.useState();
-
-  const changeNoteHandler = (val) => {
-    setNoteText(val);
-  };
 
   //------------------------- all below is for date picking ----------------
   const [date, setDate] = React.useState(new Date());
   const [mode, setMode] = React.useState("date"); // could be just default
   const [show, setShow] = React.useState(false);
   const [dateText, setDateText] = React.useState(
-    new Date().getDate() + "/" + new Date().getMonth() + 1
+    new Date().getDate() + "/" + (new Date().getMonth() + 1)
   );
 
   const showMode = (currentMode) => {
@@ -76,8 +86,19 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  // --------------- return() ------------------------
   return (
     <View style={styles.container}>
+      <Snackbar
+        style={styles.snackBar}
+        visible={snackBarVisible}
+        duration={4000}
+        onDismiss={onDismissSnackBar}
+        action={{ label: "Close" }}
+      >
+        Registration saved. See your registrations in 'Check & Send'
+      </Snackbar>
+
       <Text>This is the HomeScreen!</Text>
       <StatusBar style="auto" />
       {/* --------------------------- time picker: Start time ------------------------------ */}
@@ -162,10 +183,12 @@ export default function HomeScreen({ navigation }) {
           var dateTime = JSON.stringify(date);
           var note = noteText;
 
-          if (startTime === "undefined") {
-            // if noting has been typed into starttime. === null didnt work so I went for ==="undefined"
+          if (startTime === undefined || endTime === undefined) {
             Alert.alert("Please fill out all required fields ");
           } else {
+            console.log(startTime);
+            console.log(endTime);
+
             this.textInput.clear();
             setNoteText("");
             var registration = new Registration(
@@ -174,11 +197,8 @@ export default function HomeScreen({ navigation }) {
               dateTime,
               note
             );
-            saveFunction(registration); //the objects should be stringyfied. Might be JSON
-            Alert.alert(
-              "Registration saved",
-              "See your registrations in the 'Check & Send' menu"
-            );
+            saveFunction(registration);
+            onToggleSnackBar();
           }
         }}
       >
