@@ -101,7 +101,7 @@ export default function HomeScreen({ navigation }) {
         Registration saved. See your registrations in 'Check & Send'
       </Snackbar>
 
-      {/* <Text>This is the HomeScreen!</Text> */}
+      <Text style={styles.registerHoursText}>Register your hours!</Text>
       <StatusBar style="auto" />
       {/* --------------------------- time picker: Start time ------------------------------ */}
       {/* <Text>Enter start time</Text> */}

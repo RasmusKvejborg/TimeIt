@@ -10,6 +10,7 @@ import {
 import { styles } from "../../GlobalStyles.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Snackbar } from "react-native-paper";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 export default function SendHoursScreen({ navigation }) {
   const [data, setData] = React.useState([]);
@@ -74,63 +75,86 @@ export default function SendHoursScreen({ navigation }) {
             .reverse()
             .join("/");
           return (
-            <View key={pos}>
-              <Text style={styles.itemStyle}>
+            <View style={styles.itemStyle} key={pos}>
+              <Text style={styles.itemStyleLargeText}>
+                {formattedDate}
+                {"\n"}
                 {item.startTime}
                 {"\t"}- {"\t"}
                 {item.endTime}
-                {"\n"}
-                {formattedDate}
                 {item.note && ( // && means if truthy then return text
-                  <Text style={styles.itemStyleSmall}>
+                  <Text style={styles.itemStyleSmallText}>
                     {"\n"}Note: {item.note}
                   </Text>
                 )}
               </Text>
+              <View style={styles.trashCan}>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      "Really delete?",
+                      "Tip: You can take a screenshot before deleting it. Just in case.",
+                      [
+                        {
+                          text: "Cancel",
+                          onPress: () => console.log("oaefoipj"),
+                        },
+                        {
+                          text: "Delete",
+                          onPress: () => console.log("deleted"),
+                        },
+                      ]
+                    );
+                  }}
+                >
+                  <Ionicons
+                    // style={{ textAlign: "center" }}
+                    name="trash-outline"
+                    size={32}
+                    color="#112D4E"
+                  ></Ionicons>
+                </TouchableOpacity>
+              </View>
             </View>
           );
         })}
       </ScrollView>
-      <View>
-        <TouchableOpacity
-          onPress={() => {
-            if (xAppSecretToken === undefined) {
-              Alert.alert(
-                "Connect to e-conomic",
-                "Before you can send data, you need to log into your (or your boss') e-conomc account.",
-                // "Forbind appen tilco e-conomic",
-                // "Log ind på din (eller din chefs) e-conomic konto",
+      <TouchableOpacity
+        onPress={() => {
+          if (xAppSecretToken === undefined) {
+            Alert.alert(
+              "Connect to e-conomic",
+              "Before you can send data, you need to log into your (or your boss') e-conomc account.",
+              // "Forbind appen tilco e-conomic",
+              // "Log ind på din (eller din chefs) e-conomic konto",
 
-                [
-                  {
-                    text: "Cancel",
-                    onPress: () => {
-                      console.log("cancel has been pressed");
-                    },
+              [
+                {
+                  text: "Cancel",
+                  onPress: () => {
+                    console.log("cancel has been pressed");
                   },
-                  {
-                    text: "Open e-conomic", // "Åbn e-conomic"
-                    onPress: () => {
-                      console.log("jafeoifjase");
-                      Linking.openURL(
-                        "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=SN1I9SSkjskcoRLZhGjjuMJxQ9thLkOCTbf3rDYrHfY1"
-                      );
-                    },
+                },
+                {
+                  text: "Open e-conomic", // "Åbn e-conomic"
+                  onPress: () => {
+                    console.log("jafeoifjase");
+                    Linking.openURL(
+                      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=SN1I9SSkjskcoRLZhGjjuMJxQ9thLkOCTbf3rDYrHfY1"
+                    );
                   },
-                ]
-              );
-            } else {
-              onToggleSnackBar();
+                },
+              ]
+            );
+          } else {
+            onToggleSnackBar();
 
-              // all sent registrations should also be greyed out or something and into the bottom...
-            }
-          }}
-        >
-          <Text style={styles.buttonSendHours}>
-            Send selected hours to e-conomic
-          </Text>
-        </TouchableOpacity>
-      </View>
+            // all sent registrations should also be greyed out or something and into the bottom...
+          }
+        }}
+      >
+        <Text style={styles.buttonSendHours}>Send hours to e-conomic</Text>
+      </TouchableOpacity>
       <Snackbar
         visible={snackBarVisible}
         duration={4000}

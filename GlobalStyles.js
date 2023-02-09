@@ -1,27 +1,51 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
+
+const WIDTH = Dimensions.get("window").width;
+const HEIGHT = Dimensions.get("window").height;
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
     // justifyContent: "center",
-    top: 80,
+    top: 50,
   },
   sendHoursContainer: {
     flex: 1,
     paddingTop: 40,
-    paddingHorizontal: 20,
-    // alignItems: "center",
+    // paddingHorizontal: 20,
+    // width: WIDTH - 20,
     // justifyContent: "center",
+    // alignItems: "center",
   },
   itemStyle: {
-    marginTop: 24,
-    padding: 30,
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 19,
     backgroundColor: "#DBE2EF",
+    borderRadius: 8,
+    width: WIDTH - 20,
+    alignSelf: "center",
+
+    // fontSize: 24,
+    // width: WIDTH - 20,
+  },
+  itemStyleLargeText: {
+    // marginTop: 24,
+    // padding: 30,
     fontSize: 24,
   },
-  itemStyleSmall: {
-    fontSize: 14,
+  itemStyleSmallText: {
+    fontSize: 16,
+    // textAlign: "right",
+  },
+  trashCan: {
+    position: "absolute",
+    left: WIDTH - 70,
+    top: 20,
+
+    // alignItems: "flex-end",
+    // justifyContent: "center",
   },
   input: {
     // borderWidth: 1,
@@ -31,7 +55,7 @@ export const styles = StyleSheet.create({
     width: 300,
     // color: "white",
     fontSize: 24,
-    marginBottom: 25,
+    marginBottom: 20,
     backgroundColor: "#DBE2EF",
     borderRadius: 15,
     color: "#112D4E",
@@ -47,22 +71,17 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     backgroundColor: "#112D4E",
     color: "#F9F7F7",
-    // borderColor: "black",
-    // marginBottom: 160,
   },
   buttonSendHours: {
-    // borderWidth: 1,
-    marginTop: 5,
-    marginBottom: 5,
+    width: WIDTH - 20,
+    alignSelf: "center",
+    textAlign: "center",
+    marginBottom: 4,
     fontSize: 24,
-    borderRadius: 30,
+    borderRadius: 7,
     paddingVertical: 14,
-    paddingHorizontal: 20,
     backgroundColor: "#112D4E",
-    alignItems: "center",
-    justifyContent: "center",
     color: "#F9F7F7",
-    // borderColor: "black",
   },
   modal: {
     backgroundColor: "#F9F7F7",
@@ -77,9 +96,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 14,
     marginHorizontal: 6,
-    marginVertical: 10,
-    fontSize: 22,
-    fontWeight: "bold",
+    marginVertical: 7,
+    fontSize: 24,
+    // fontWeight: "bold",
     color: "#112D4E",
     backgroundColor: "#DBE2EF",
   },
@@ -90,5 +109,10 @@ export const styles = StyleSheet.create({
     height: 70,
     // // alignItems: "baseline",
     // justifyContent: "flex-end",
+  },
+  registerHoursText: {
+    fontSize: 22,
+    marginBottom: 20,
+    // color: "#112D4E",
   },
 });
