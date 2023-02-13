@@ -10,6 +10,7 @@ import {
   Keyboard,
   Modal,
   SafeAreaView,
+  Dimensions,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import { Registration } from "../../RegistrationClass.js";
@@ -17,6 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ModalTimePicker } from "../../ModalTimePicker.js";
 import { Snackbar } from "react-native-paper";
+// import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 export default function HomeScreen({ navigation }) {
   const [noteText, setNoteText] = React.useState();
@@ -25,6 +27,7 @@ export default function HomeScreen({ navigation }) {
     setNoteText(val);
   };
 
+  const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
   // -------------------- consts for snackBar -------------------------------
   const [snackBarVisible, setSnackBarVisible] = React.useState(false);
 
@@ -37,10 +40,6 @@ export default function HomeScreen({ navigation }) {
   const [chooseStartTime, setChooseStartTime] = React.useState();
   const [chooseEndTime, setChooseEndTime] = React.useState();
   const [startOrEndTimeSelected, setSstartOrEndTimeSelected] = React.useState();
-
-  // const changeStartOrEndTimeSelected = (value) => {
-  //   setIsModalVisible(value);
-  // };
 
   const changeModalVisibility = (bool, value) => {
     setIsModalVisible(bool);
@@ -75,6 +74,16 @@ export default function HomeScreen({ navigation }) {
       if (prevItems !== null) {
         newItems = JSON.parse(prevItems);
         newItems.push(registration);
+
+        newItems.sort((a, b) =>
+          a.date == b.date
+            ? a.startTime < b.startTime
+              ? 1
+              : -1
+            : a.date < b.date
+            ? 1
+            : -1
+        ); // sorts the list datewise
       } else {
         newItems = [registration];
       }
@@ -88,9 +97,25 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  React.useEffect(() => {
+    const setXAppSecretTokenImmediately = async () => {
+      setXAgreementGrantToken(await AsyncStorage.getItem("@xAppSecretToken"));
+    };
+
+    return navigation.addListener("focus", () => {
+      setXAppSecretTokenImmediately();
+    });
+  }, []);
+
   // -////////////////////////////////////////////////////////////////////-------------- return() ----------------------//////////////////////////////////////////////////////--
   return (
     <View style={styles.container}>
+      {/* <KeyboardAwareScrollView
+        contentContainerStyle={{
+          height: Dimensions.get("window").height * 2.25, 
+          width: "100%",
+        }}
+      > */}
       <Snackbar
         style={styles.snackBar}
         visible={snackBarVisible}
@@ -106,7 +131,11 @@ export default function HomeScreen({ navigation }) {
       {/* --------------------------- time picker: Start time ------------------------------ */}
       {/* <Text>Enter start time</Text> */}
       <TouchableOpacity
-        onPress={() => changeModalVisibility(true, "startTime")}
+        onPress={() => {
+          onDismissSnackBar();
+
+          changeModalVisibility(true, "startTime");
+        }}
       >
         <View pointerEvents="none">
           <TextInput placeholder="Select start time" style={styles.input}>
@@ -124,7 +153,13 @@ export default function HomeScreen({ navigation }) {
       {/* --------------------------- time picker: End time ------------------------------ */}
 
       {/* <Text>Enter end time</Text> */}
-      <TouchableOpacity onPress={() => changeModalVisibility(true, "endTime")}>
+      <TouchableOpacity
+        onPress={() => {
+          onDismissSnackBar();
+
+          changeModalVisibility(true, "endTime");
+        }}
+      >
         <View pointerEvents="none">
           <TextInput placeholder="Select end time" style={styles.input}>
             {chooseEndTime}
@@ -148,6 +183,8 @@ export default function HomeScreen({ navigation }) {
       {/* <Text>Select date</Text> */}
       <TouchableOpacity
         onPress={() => {
+          onDismissSnackBar();
+
           showMode("date"); // this opens the datepicker                                 |
         }}
       >
@@ -178,8 +215,21 @@ export default function HomeScreen({ navigation }) {
         />
       )}
       {/* ----------------------- end of datepicker ----------------------------------- */}
+{/*  ---------------------- show activity and project selector only of connected to economic */}
+      {xAgreementGrantToken && (
+        <TextInput
+          placeholder="Select activity"
+          style={styles.input}
+        ></TextInput>
+      )}
+      {xAgreementGrantToken && (
+        <TextInput
+          placeholder="Select project"
+          style={styles.input}
+        ></TextInput>
+      )}
 
-      {/* <Text>Note (optional)</Text> */}
+      {/* ----------------------- note ------------------------------------- */}
       <TextInput
         placeholder="Note (optional)"
         ref={(input) => {
@@ -197,11 +247,15 @@ export default function HomeScreen({ navigation }) {
           var dateTime = JSON.stringify(date);
           var note = noteText;
 
+          // console.log(dateTime);
+
           if (startTime === undefined || endTime === undefined) {
             Alert.alert("Please fill out all required fields ");
           } else {
-            console.log(startTime);
-            console.log(endTime);
+            // console.log(startTime);
+            // console.log(endTime);
+
+            // console.log(dateTime);
 
             this.textInput.clear();
             setNoteText("");
@@ -211,6 +265,7 @@ export default function HomeScreen({ navigation }) {
               dateTime,
               note
             );
+
             saveFunction(registration);
             onToggleSnackBar();
           }
@@ -220,6 +275,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.button}>Submit</Text>
         </View>
       </TouchableOpacity>
+      {/* </KeyboardAwareScrollView> */}
     </View>
   );
 }

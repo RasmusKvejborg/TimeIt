@@ -8,7 +8,6 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import HomeScreen from "./screens/HomeScreen.js";
 import DriveScreen from "./screens/DriveScreen.js";
 import SendHoursScreen from "./screens/SendHoursScreen.js";
-import { setStatusBarBackgroundColor } from "expo-status-bar";
 
 //screen names
 const homeScreenName = "Work";

@@ -9,16 +9,21 @@ export default function DriveScreen({ navigation }) {
 
   const config = {
     headers: {
-      "X-AgreementGrantToken": "Xb7Jrvqj6dpbPKn0GTLGYbuU6P9D4fHi3OvfHIkEgfs1",
+      "X-AgreementGrantToken": "QsQJc5VzgFoxJKlaoY4qiEuQ7rL60MQimZhJuCgDUaM1",
       "X-AppSecretToken": "gGl2gV5qcBMGB71S2xM60ozdiNPDnEdMXdk6z4jmTF01",
       "Content-Type": "application/json",
     },
   };
 
+  // Version 2 kunne være fedt hvis man også kunne registrerer
+  // kørsel på projekt baseret på to adresser. Her ville nogle
+  // foretrukne adresser være fint at få listet.
+  // Altså firmaadrsse, hjemmeadresse og kundesdresse.
+
   const getContent = () => {
     fetch("https://restapi.e-conomic.com/customers", {
       headers: {
-        "X-AgreementGrantToken": "Xb7Jrvqj6dpbPKn0GTLGYbuU6P9D4fHi3OvfHIkEgfs1",
+        "X-AgreementGrantToken": "QsQJc5VzgFoxJKlaoY4qiEuQ7rL60MQimZhJuCgDUaM1",
         "X-AppSecretToken": "gGl2gV5qcBMGB71S2xM60ozdiNPDnEdMXdk6z4jmTF01",
         "Content-Type": "application/json",
       },
