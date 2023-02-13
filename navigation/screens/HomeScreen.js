@@ -215,7 +215,7 @@ export default function HomeScreen({ navigation }) {
         />
       )}
       {/* ----------------------- end of datepicker ----------------------------------- */}
-{/*  ---------------------- show activity and project selector only of connected to economic */}
+      {/*  ---------------------- show activity and project selector only of connected to economic */}
       {xAgreementGrantToken && (
         <TextInput
           placeholder="Select activity"

@@ -51,7 +51,7 @@ export default function SendHoursScreen({ navigation }) {
 
   const config = {
     headers: {
-      "X-AppSecretToken": "tpMyOBYl3Cq6KJ5Z2etH9PDfSE4G9ks0EsWYlYbbpI01",
+      "X-AppSecretToken": "vf0W9meQJEx3uK7mzjYEZhEbfTYWnSswmMzTIDeLWNI1",
       "X-AgreementGrantToken": xAgreementGrantToken,
       "Content-Type": "application/json",
     },
@@ -100,42 +100,68 @@ export default function SendHoursScreen({ navigation }) {
     }
   };
 
+  // ------------------post all time entries-------------------------------------------
+  const postAllTimeEntries = () => {
+    const promises = [];
+    data.forEach((val) => {
+      promises.push(postTimeEntry(val.note));
+    });
+    Promise.all(promises)
+      .then((result) => {
+        console.log(result);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+  };
   // -------------------------------- post timeentry ---------------------------------------------
-  const postTimeEntry = (note) => {
-    axios
+
+  const postTimeEntry = async (note) => {
+    const res = await axios
       .post(
         "https://apis.e-conomic.com/api/v16.2.2/timeentries",
         {
           activityNumber: 1,
-          date: "2023-12-02T15:23:01Z",
+          date: "2023-02-13T15:23:01Z",
           employeeNumber: 1,
           projectNumber: 1,
           numberOfHours: 7,
-          text: "Det er sgu da fedt", // KAN SGU NOK OS LÆRE AT LAVE DET HER TIL AT VÆRE NOTEN...
+          text: { note },
         },
         config
       )
+
+      // return res;
       .then((result) => {
         setResponse(result);
+        console.log(result.data);
       })
       .catch((e) => console.log(e));
   };
+
   //-------------------------------- end post timeentry end ---------------------------------------------
 
-  // --------------------------test
-  const getContent = () => {
-    fetch("https://apis.e-conomic.com/api/v16.2.2/projectgroups", {
-      config,
-    })
-      .then((res) => res.json())
+  const getSingleTimeEntry = () => {
+    axios
+      .get("https://apis.e-conomic.com/api/v16.3.0/timeentries/7", config)
       .then((result) => {
+        console.log(result.data);
+      });
+  };
+
+  // --------------------------test - WORKS NOW
+  const getContent = () => {
+    axios
+      .get("https://apis.e-conomic.com/api/v16.3.0/projectgroups/all", config)
+      .then((result) => {
+        console.log(result.data);
         setResponse(result);
       });
-    console.log(response);
 
-    response !== undefined &&
-      // response.collection.map((value) => console.log(value.name));
-      console.log(response);
+    response !== undefined && console.log(response);
+
+    //  if succeeded
+    onToggleHoursSentSnackBar();
   };
 
   ////////////////////////////////////////////// return ///////////////////////////////////////////////////////////////
@@ -206,10 +232,15 @@ export default function SendHoursScreen({ navigation }) {
       <TouchableOpacity
         onPress={() => {
           if (xAgreementGrantToken) {
-            // postTimeEntry("hej");
+            // postTimeEntry("hello");
             // postTimeEntry();
+            // console.log(data)
             getContent();
-            onToggleHoursSentSnackBar(); // should be put inside, only shown if no errors.
+            // postAllTimeEntries();
+
+            // getSingleTimeEntry();
+            // postTimeEntry("hello");
+            // onToggleHoursSentSnackBar(); // should be put inside, only shown if no errors.
             // TODO all sent registrations should also be greyed out or something and into the bottom...
           } else {
             Alert.alert(
@@ -229,7 +260,7 @@ export default function SendHoursScreen({ navigation }) {
                   text: "Open e-conomic",
                   onPress: () => {
                     Linking.openURL(
-                      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=SN1I9SSkjskcoRLZhGjjuMJxQ9thLkOCTbf3rDYrHfY1"
+                      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01"
                     );
                     setShowTokenInputModal(true);
                   },
