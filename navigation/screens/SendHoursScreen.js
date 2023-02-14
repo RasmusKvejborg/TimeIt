@@ -17,6 +17,7 @@ import axios from "axios";
 
 export default function SendHoursScreen({ navigation }) {
   const [data, setData] = React.useState([]);
+  const [oldData, setOldData] = React.useState([]);
 
   // -------------------- consts for snackBar -------------------------------
   const [snackBarVisible, setSnackBarVisible] = React.useState(false);
@@ -102,41 +103,60 @@ export default function SendHoursScreen({ navigation }) {
 
   // ------------------post all time entries-------------------------------------------
   const postAllTimeEntries = () => {
-    const promises = [];
-    data.forEach((val) => {
-      promises.push(postTimeEntry(val.note));
-    });
-    Promise.all(promises)
-      .then((result) => {
-        console.log(result);
-      })
-      .catch((e) => {
-        console.log(e);
+    // if (data.length === 0) {
+    //   Alert.alert(
+    //     "There are no time registrations",
+    //     "Create new registrations in 'Work' menu."
+    //   );
+    //   return;
+    // }
+
+    // data.forEach((val) => {
+    //   postTimeEntry(val.note, val.date);
+    // });
+
+    if (data) {
+      const promises = [];
+      data.forEach((val) => {
+        promises.push(postTimeEntry(val.note));
       });
+      Promise.all(promises)
+        .then((result) => {
+          //  if success:
+          setOldData(data);
+          setData();
+          deleteList();
+          onToggleHoursSentSnackBar();
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    } else {
+      Alert.alert("No registrations");
+    }
   };
   // -------------------------------- post timeentry ---------------------------------------------
 
   const postTimeEntry = async (note) => {
-    const res = await axios
-      .post(
-        "https://apis.e-conomic.com/api/v16.2.2/timeentries",
-        {
-          activityNumber: 1,
-          date: "2023-02-13T15:23:01Z",
-          employeeNumber: 1,
-          projectNumber: 1,
-          numberOfHours: 7,
-          text: { note },
-        },
-        config
-      )
+    const res = await axios.post(
+      "https://apis.e-conomic.com/api/v16.2.2/timeentries",
+      {
+        activityNumber: 1,
+        date: "2023-02-17T15:23:01Z", // date, //
+        employeeNumber: 1,
+        projectNumber: 1,
+        numberOfHours: 7,
+        text: note,
+      },
+      config
+    );
 
-      // return res;
-      .then((result) => {
-        setResponse(result);
-        console.log(result.data);
-      })
-      .catch((e) => console.log(e));
+    return res;
+    // .then((result) => {
+    //   setResponse(result);
+    //   console.log(result.data);
+    // })
+    // .catch((e) => console.log(e));
   };
 
   //-------------------------------- end post timeentry end ---------------------------------------------
@@ -161,7 +181,7 @@ export default function SendHoursScreen({ navigation }) {
     response !== undefined && console.log(response);
 
     //  if succeeded
-    onToggleHoursSentSnackBar();
+    // onToggleHoursSentSnackBar();
   };
 
   ////////////////////////////////////////////// return ///////////////////////////////////////////////////////////////
@@ -178,66 +198,68 @@ export default function SendHoursScreen({ navigation }) {
           This is the SendHoursScreen!
         </Text>
 
-        {data.map((item, pos) => {
-          var formattedDate = JSON.parse(item.date)
-            .slice(0, 10)
-            .split("-")
-            .reverse()
-            .join("/");
-          return (
-            <View style={styles.itemStyle} key={pos}>
-              <Text style={styles.itemStyleLargeText}>
-                {formattedDate}
-                {"\n"}
-                {item.startTime}
-                {"\t"}- {"\t"}
-                {item.endTime}
-                {item.note && ( // && means if truthy then return text
-                  <Text style={styles.itemStyleSmallText}>
-                    {"\n"}Note: {item.note}
-                  </Text>
-                )}
-              </Text>
-              <View style={styles.trashCan}>
-                <TouchableOpacity
-                  onPress={() => {
-                    Alert.alert(
-                      "Really delete?",
-                      "Tip: You can take a screenshot before deleting it, just in case.",
-                      [
-                        {
-                          text: "Cancel",
-                          onPress: () => console.log("cancel pressed"),
-                        },
-                        {
-                          text: "Delete",
-                          onPress: () => deleteValue(item),
-                        },
-                      ]
-                    );
-                  }}
-                >
-                  <Ionicons
-                    // style={{ textAlign: "center" }}
-                    name="trash-outline"
-                    size={32}
-                    color="#112D4E"
-                  ></Ionicons>
-                </TouchableOpacity>
+        {data &&
+          data.map((item, pos) => {
+            var formattedDate = JSON.parse(item.date)
+              .slice(0, 10)
+              .split("-")
+              .reverse()
+              .join("/");
+            return (
+              <View style={styles.itemStyle} key={pos}>
+                <Text style={styles.itemStyleLargeText}>
+                  {formattedDate}
+                  {"\n"}
+                  {item.startTime}
+                  {"\t"}- {"\t"}
+                  {item.endTime}
+                  {item.note && ( // && means if truthy then return text
+                    <Text style={styles.itemStyleSmallText}>
+                      {"\n"}Note: {item.note}
+                    </Text>
+                  )}
+                </Text>
+                <View style={styles.trashCan}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Alert.alert(
+                        "Really delete?",
+                        "Tip: You can take a screenshot before deleting it, just in case.",
+                        [
+                          {
+                            text: "Cancel",
+                            onPress: () => console.log("cancel pressed"),
+                          },
+                          {
+                            text: "Delete",
+                            onPress: () => deleteValue(item),
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <Ionicons
+                      // style={{ textAlign: "center" }}
+                      name="trash-outline"
+                      size={32}
+                      color="#112D4E"
+                    ></Ionicons>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          );
-        })}
+            );
+          })}
       </ScrollView>
       <TouchableOpacity
         onPress={() => {
           if (xAgreementGrantToken) {
-            // postTimeEntry("hello");
-            // postTimeEntry();
-            // console.log(data)
-            getContent();
-            // postAllTimeEntries();
+            // postTimeEntry("halt");
+            // console.log(data);
 
+            // postTimeEntry("hello", "2023-02-14T15:23:01Z");
+            // getContent();
+            postAllTimeEntries();
+            // console.log(data);
             // getSingleTimeEntry();
             // postTimeEntry("hello");
             // onToggleHoursSentSnackBar(); // should be put inside, only shown if no errors.

@@ -87,7 +87,7 @@ export default function HomeScreen({ navigation }) {
       } else {
         newItems = [registration];
       }
-
+      console.log(newItems);
       const value = await AsyncStorage.setItem(
         "@registration",
         JSON.stringify(newItems)
@@ -106,6 +106,17 @@ export default function HomeScreen({ navigation }) {
       setXAppSecretTokenImmediately();
     });
   }, []);
+
+  const deleteList = async () => {
+    try {
+      console.log(
+        "list deleted from asyncstorage (it is still in the setData list)"
+      );
+      await AsyncStorage.removeItem("@registration");
+    } catch (err) {
+      console.log("error in deletion: ", err);
+    }
+  };
 
   // -////////////////////////////////////////////////////////////////////-------------- return() ----------------------//////////////////////////////////////////////////////--
   return (
@@ -204,6 +215,7 @@ export default function HomeScreen({ navigation }) {
             setShow(false);
             const chosenDate = selectedDate || date;
             setDate(chosenDate);
+            // console.log(date);
             let tempDate = new Date(chosenDate);
             let fDate =
               String("0" + tempDate.getDate()).slice(-2) +
@@ -215,7 +227,7 @@ export default function HomeScreen({ navigation }) {
         />
       )}
       {/* ----------------------- end of datepicker ----------------------------------- */}
-      {/*  ---------------------- show activity and project selector only of connected to economic */}
+      {/*  ---------- show activity and project selector only of connected to economic------------ */}
       {xAgreementGrantToken && (
         <TextInput
           placeholder="Select activity"
@@ -245,9 +257,16 @@ export default function HomeScreen({ navigation }) {
           var startTime = chooseStartTime;
           var endTime = chooseEndTime;
           var dateTime = JSON.stringify(date);
+
+          // var dateTime = JSON.stringify(date);
           var note = noteText;
 
-          // console.log(dateTime);
+          console.log("datesime", dateTime);
+          console.log(date.getUTCDate());
+          console.log(dateTime);
+
+          // deleteList();
+          // console.log(JSON.parse(dateTime));
 
           if (startTime === undefined || endTime === undefined) {
             Alert.alert("Please fill out all required fields ");
@@ -255,7 +274,7 @@ export default function HomeScreen({ navigation }) {
             // console.log(startTime);
             // console.log(endTime);
 
-            // console.log(dateTime);
+            // console.log(""hello"");
 
             this.textInput.clear();
             setNoteText("");
@@ -265,6 +284,8 @@ export default function HomeScreen({ navigation }) {
               dateTime,
               note
             );
+
+            console.log(registration);
 
             saveFunction(registration);
             onToggleSnackBar();
