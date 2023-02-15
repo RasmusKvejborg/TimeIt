@@ -11,6 +11,8 @@ import {
   Modal,
   SafeAreaView,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import { Registration } from "../../RegistrationClass.js";
@@ -26,6 +28,8 @@ export default function HomeScreen({ navigation }) {
   const changeNoteHandler = (val) => {
     setNoteText(val);
   };
+
+  const { height } = Dimensions.get("window");
 
   const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
   // -------------------- consts for snackBar -------------------------------
@@ -48,6 +52,20 @@ export default function HomeScreen({ navigation }) {
   const setTimeData = (option) => {
     startOrEndTimeSelected === "endTime" && setChooseEndTime(option);
     startOrEndTimeSelected === "startTime" && setChooseStartTime(option);
+  };
+
+  // ---------------------- calc total hours -----------------------
+  const calculateHours = (startTime, endTime) => {
+    const [startHour, startMinutes] = startTime.split(":").map(Number);
+    let [endHour, endMinutes] = endTime.split(":").map(Number);
+
+    if (endHour <= startHour) {
+      endHour += 24; // if someone worked past midnight
+    }
+
+    const totalMinutes =
+      endHour * 60 + endMinutes - (startHour * 60 + startMinutes);
+    return totalMinutes / 60;
   };
   //  ----------------- end of timePicking ---------------------
 
@@ -120,13 +138,7 @@ export default function HomeScreen({ navigation }) {
 
   // -////////////////////////////////////////////////////////////////////-------------- return() ----------------------//////////////////////////////////////////////////////--
   return (
-    <View style={styles.container}>
-      {/* <KeyboardAwareScrollView
-        contentContainerStyle={{
-          height: Dimensions.get("window").height * 2.25, 
-          width: "100%",
-        }}
-      > */}
+    <SafeAreaView style={styles.container}>
       <Snackbar
         style={styles.snackBar}
         visible={snackBarVisible}
@@ -227,6 +239,7 @@ export default function HomeScreen({ navigation }) {
         />
       )}
       {/* ----------------------- end of datepicker ----------------------------------- */}
+
       {/*  ---------- show activity and project selector only of connected to economic------------ */}
       {xAgreementGrantToken && (
         <TextInput
@@ -257,31 +270,28 @@ export default function HomeScreen({ navigation }) {
           var startTime = chooseStartTime;
           var endTime = chooseEndTime;
           var dateTime = JSON.stringify(date);
+          var totalHours = calculateHours(chooseStartTime, chooseEndTime);
 
+          console.log("totalhours: ", totalHours);
           // var dateTime = JSON.stringify(date);
           var note = noteText;
 
           // deleteList();
-          // console.log(JSON.parse(dateTime));
 
           if (startTime === undefined || endTime === undefined) {
             Alert.alert("Please fill out all required fields ");
           } else {
-            // console.log(startTime);
-            // console.log(endTime);
-
-            // console.log(""hello"");
-
             this.textInput.clear();
             setNoteText("");
             var registration = new Registration(
               startTime,
               endTime,
               dateTime,
+              totalHours,
               note
             );
 
-            console.log(registration);
+            console.log(chooseStartTime);
 
             saveFunction(registration);
             onToggleSnackBar();
@@ -292,7 +302,6 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.button}>Save</Text>
         </View>
       </TouchableOpacity>
-      {/* </KeyboardAwareScrollView> */}
-    </View>
+    </SafeAreaView>
   );
 }

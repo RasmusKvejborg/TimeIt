@@ -2,7 +2,7 @@ import React from "react";
 import { styles } from "./GlobalStyles.js";
 import {
   Text,
-  View,
+  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Dimensions,
@@ -34,6 +34,7 @@ const ModalEmployeePicker = (props) => {
               {
                 text: "Cancel",
                 onPress: () => {
+                  onPressItem();
                   console.log("cancel has been pressed");
                 },
               },
@@ -61,7 +62,7 @@ const ModalEmployeePicker = (props) => {
   });
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.modal,
         {
@@ -73,7 +74,7 @@ const ModalEmployeePicker = (props) => {
       <Text style={styles.registerHoursText}>Find yourself in the list</Text>
       <Text>
         Dont see yourself, even if you scroll? Make sure you are created as an
-        employee in e-conomic, then close the app and try again.
+        employee in e-conomic, then close the app completely and try again.
       </Text>
 
       <ScrollView>
@@ -81,7 +82,7 @@ const ModalEmployeePicker = (props) => {
         {employeeOptions}
         {/* </TouchableOpacity> */}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

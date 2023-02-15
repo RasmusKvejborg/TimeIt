@@ -55,14 +55,16 @@ export default function SendHoursScreen({ navigation }) {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
   const saveEmployee = async (number) => {
-    SetemployeeNo(number);
-    await AsyncStorage.setItem("@Employee", JSON.stringify(number));
-    // console.log(await AsyncStorage.getItem("@Employee"), "hej");
+    if (number) {
+      SetemployeeNo(number);
+      await AsyncStorage.setItem("@Employee", JSON.stringify(number));
+      // console.log(await AsyncStorage.getItem("@Employee"), "hej");
+    }
   };
 
   const deleteEmployee = async () => {
     try {
-      await AsyncStorage.removeItem("@registration");
+      await AsyncStorage.removeItem("@Employee");
       SetemployeeNo();
       console.log("Employee deleted from asyncstorage AND employeeNo");
     } catch (err) {
@@ -152,10 +154,6 @@ export default function SendHoursScreen({ navigation }) {
           );
         }
       });
-
-    // SetemployeeNo(1);
-
-    // postAllTimeEntries();
   };
 
   // ------------------post all time entries-------------------------------------------
@@ -168,7 +166,15 @@ export default function SendHoursScreen({ navigation }) {
     if (data && data.length > 0) {
       const promises = [];
       data.forEach((val) => {
-        promises.push(postTimeEntry(val.note, val.date));
+        promises.push(
+          postTimeEntry(
+            val.date,
+            val.startTime,
+            val.endTime,
+            val.totalHours,
+            val.note
+          )
+        ); // calls the postTimeEntry() for each entry
       });
       Promise.all(promises)
         .then((result) => {
@@ -200,7 +206,7 @@ export default function SendHoursScreen({ navigation }) {
   };
   // -------------------------------- post timeentry ---------------------------------------------
 
-  const postTimeEntry = async (note, date) => {
+  const postTimeEntry = async (date, startTime, endTime, totalHours, note) => {
     const res = await axios.post(
       "https://apis.e-conomic.com/api/v16.2.2/timeentries",
       {
@@ -208,8 +214,8 @@ export default function SendHoursScreen({ navigation }) {
         date: JSON.parse(date), // this has to be parsed because it is stringified twice by mistake in HomeScreen. format: "2023-02-18T15:23:01Z"
         employeeNumber: employeeNo,
         projectNumber: 1,
-        numberOfHours: 7,
-        text: note,
+        numberOfHours: totalHours,
+        text: startTime + "-" + endTime + (note && " note: " + note),
       },
       config
     );
@@ -290,6 +296,8 @@ export default function SendHoursScreen({ navigation }) {
                   {item.startTime}
                   {"\t"}- {"\t"}
                   {item.endTime}
+                  {"\t"}hours:{"\t"}
+                  {item.totalHours && item.totalHours}
                   {item.note && ( // && means if truthy then return text
                     <Text style={styles.itemStyleSmallText}>
                       {"\n"}Note: {item.note}
@@ -335,7 +343,7 @@ export default function SendHoursScreen({ navigation }) {
 
             // postTimeEntry("hello", "2023-02-14T15:23:01Z");
             // getContent();
-            // console.log(data);
+            console.log("employee number: ", employeeNo);
 
             employeeNo ? postAllTimeEntries() : showEmployeeSelection();
 
@@ -347,7 +355,7 @@ export default function SendHoursScreen({ navigation }) {
           } else {
             Alert.alert(
               "Connect to e-conomic",
-              "Before you can send data, you need to log into your (or your boss') e-conomc account.",
+              "You need to log into your company's e-conomc account.",
               // "Forbind appen tilco e-conomic",
               // "Log ind på din (eller din chefs) e-conomic konto",
 
