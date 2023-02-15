@@ -61,22 +61,24 @@ const ModalTimePicker = (props) => {
   });
 
   return (
-    <TouchableOpacity
-      onPress={() => props.changeModalVisibility(false)}
-      // style={styles.container}
+    <View
+      style={[
+        styles.modal,
+        {
+          alignItems: "center",
+          height: HEIGHT,
+        },
+      ]}
     >
-      <View
-        style={[
-          styles.modal,
-          {
-            alignItems: "center",
-            height: HEIGHT,
-          },
-        ]}
-      >
-        <ScrollView>{option}</ScrollView>
-      </View>
-    </TouchableOpacity>
+      <ScrollView>
+        <TouchableOpacity
+          onPress={() => props.changeModalVisibility(false)}
+          // style={styles.container}
+        >
+          {option}
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 

@@ -261,10 +261,6 @@ export default function HomeScreen({ navigation }) {
           // var dateTime = JSON.stringify(date);
           var note = noteText;
 
-          console.log("datesime", dateTime);
-          console.log(date.getUTCDate());
-          console.log(dateTime);
-
           // deleteList();
           // console.log(JSON.parse(dateTime));
 
@@ -293,7 +289,7 @@ export default function HomeScreen({ navigation }) {
         }}
       >
         <View>
-          <Text style={styles.button}>Submit</Text>
+          <Text style={styles.button}>Save</Text>
         </View>
       </TouchableOpacity>
       {/* </KeyboardAwareScrollView> */}

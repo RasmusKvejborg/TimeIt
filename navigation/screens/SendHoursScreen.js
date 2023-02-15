@@ -14,6 +14,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Snackbar } from "react-native-paper";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import axios from "axios";
+// this needs to be changed:
+import { ModalEmployeePicker } from "../../ModalEmployeePicker.js";
 
 export default function SendHoursScreen({ navigation }) {
   const [data, setData] = React.useState([]);
@@ -47,7 +49,28 @@ export default function SendHoursScreen({ navigation }) {
       console.log("error in deletion: ", err);
     }
   };
+  // ------------------------ employeee picker modal -----------------
+  const [emplArray, setEmplArray] = React.useState([]);
+  const [employeeNo, SetemployeeNo] = React.useState();
+  const [isModalVisible, setIsModalVisible] = React.useState(false);
+
+  const saveEmployee = async (number) => {
+    SetemployeeNo(number);
+    await AsyncStorage.setItem("@Employee", JSON.stringify(number));
+    // console.log(await AsyncStorage.getItem("@Employee"), "hej");
+  };
+
+  const deleteEmployee = async () => {
+    try {
+      await AsyncStorage.removeItem("@registration");
+      SetemployeeNo();
+      console.log("Employee deleted from asyncstorage AND employeeNo");
+    } catch (err) {
+      console.log("error in deletion of employee: ", err);
+    }
+  };
   // ------------------API stuff----------------------------------
+
   let [response, setResponse] = React.useState();
 
   const config = {
@@ -81,10 +104,17 @@ export default function SendHoursScreen({ navigation }) {
   };
 
   React.useEffect(() => {
+    // -- getting token from storage:
     const setXAppSecretTokenImmediately = async () => {
       setXAgreementGrantToken(await AsyncStorage.getItem("@xAppSecretToken"));
     };
     setXAppSecretTokenImmediately();
+    // -- getting employee from storage:
+    const setSavedEmployeeImmediately = async () => {
+      SetemployeeNo(await AsyncStorage.getItem("@Employee"));
+    };
+    setSavedEmployeeImmediately();
+    // --
     return navigation.addListener("focus", () => {
       fetchValues();
     });
@@ -92,44 +122,77 @@ export default function SendHoursScreen({ navigation }) {
 
   const deleteList = async () => {
     try {
-      console.log(
-        "list deleted from asyncstorage (it is still in the setData list)"
-      );
+      console.log("list deleted from asyncstorage");
       await AsyncStorage.removeItem("@registration");
     } catch (err) {
       console.log("error in deletion: ", err);
     }
   };
 
+  // ------------------- get employee-----------------------------------------
+
+  const showEmployeeSelection = () => {
+    getEmployees()
+      .then((empl) => {
+        setEmplArray(empl);
+        setIsModalVisible(true);
+      })
+      .catch((e) => {
+        console.log(e);
+        const { status, data, config } = e.response;
+
+        if (status === 401) {
+          Alert.alert(
+            "401 error",
+            "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
+          );
+        } else {
+          Alert.alert(
+            "Something went wrong. Try again later or contact support"
+          );
+        }
+      });
+
+    // SetemployeeNo(1);
+
+    // postAllTimeEntries();
+  };
+
   // ------------------post all time entries-------------------------------------------
   const postAllTimeEntries = () => {
-    // if (data.length === 0) {
-    //   Alert.alert(
-    //     "There are no time registrations",
-    //     "Create new registrations in 'Work' menu."
-    //   );
-    //   return;
-    // }
-
     // data.forEach((val) => {
     //   postTimeEntry(val.note, val.date);
     // });
+    // below is a complex version of the above
 
-    if (data) {
+    if (data && data.length > 0) {
       const promises = [];
       data.forEach((val) => {
-        promises.push(postTimeEntry(val.note));
+        promises.push(postTimeEntry(val.note, val.date));
       });
       Promise.all(promises)
         .then((result) => {
-          //  if success:
+          //  if success, then save oldData, but delete all registrations:
           setOldData(data);
           setData();
           deleteList();
           onToggleHoursSentSnackBar();
+          console.log("hours have been sent to employee number ", employeeNo);
         })
         .catch((e) => {
           console.log(e);
+          const { status, data, config } = e.response;
+
+          if (status === 401) {
+            Alert.alert(
+              "401 error",
+              "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
+            );
+          } else {
+            Alert.alert(
+              "Something went wrong. Try again later or contact support"
+            );
+          }
         });
     } else {
       Alert.alert("No registrations");
@@ -137,13 +200,13 @@ export default function SendHoursScreen({ navigation }) {
   };
   // -------------------------------- post timeentry ---------------------------------------------
 
-  const postTimeEntry = async (note) => {
+  const postTimeEntry = async (note, date) => {
     const res = await axios.post(
       "https://apis.e-conomic.com/api/v16.2.2/timeentries",
       {
         activityNumber: 1,
-        date: "2023-02-17T15:23:01Z", // date, //
-        employeeNumber: 1,
+        date: JSON.parse(date), // this has to be parsed because it is stringified twice by mistake in HomeScreen. format: "2023-02-18T15:23:01Z"
+        employeeNumber: employeeNo,
         projectNumber: 1,
         numberOfHours: 7,
         text: note,
@@ -169,8 +232,24 @@ export default function SendHoursScreen({ navigation }) {
       });
   };
 
-  // --------------------------test - WORKS NOW
-  const getContent = () => {
+  // --------------------------Get requests ----------------------
+
+  const getEmployees = () => {
+    return axios
+      .get("https://apis.e-conomic.com/api/v16.3.0/employees/all", config)
+      .then((result) => {
+        const namesAndNumbers = result.data.items.map((employee) => ({
+          name: employee.name,
+          number: employee.number,
+        }));
+
+        return namesAndNumbers;
+      });
+  };
+
+  //  --------------------get project ------------------------------
+
+  const getProjectGroups = () => {
     axios
       .get("https://apis.e-conomic.com/api/v16.3.0/projectgroups/all", config)
       .then((result) => {
@@ -179,9 +258,6 @@ export default function SendHoursScreen({ navigation }) {
       });
 
     response !== undefined && console.log(response);
-
-    //  if succeeded
-    // onToggleHoursSentSnackBar();
   };
 
   ////////////////////////////////////////////// return ///////////////////////////////////////////////////////////////
@@ -191,7 +267,8 @@ export default function SendHoursScreen({ navigation }) {
         <Text
           onPress={() => {
             // deleteList();
-            deleteToken();
+            // deleteToken();
+            deleteEmployee();
             // this is just for testing that I have a deleteList function
           }}
         >
@@ -258,7 +335,10 @@ export default function SendHoursScreen({ navigation }) {
 
             // postTimeEntry("hello", "2023-02-14T15:23:01Z");
             // getContent();
-            postAllTimeEntries();
+            // console.log(data);
+
+            employeeNo ? postAllTimeEntries() : showEmployeeSelection();
+
             // console.log(data);
             // getSingleTimeEntry();
             // postTimeEntry("hello");
@@ -299,7 +379,25 @@ export default function SendHoursScreen({ navigation }) {
         )}
       </TouchableOpacity>
 
-      {/* -------------------below is invisible thinks like modals and popups -------------------*/}
+      {/* -------------------below is invisible things like modals and popups -------------------*/}
+      {/* employee picker modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isModalVisible}
+        nRequestClose={() => setIsModalVisible(false)}
+      >
+        <ModalEmployeePicker
+          employees={emplArray}
+          isVisible={isModalVisible}
+          setIsModalVisible={setIsModalVisible}
+          setEmployeeData={(number) => {
+            saveEmployee(number);
+          }}
+        ></ModalEmployeePicker>
+      </Modal>
+
+      {/* token input modal */}
       <Modal
         style={styles.modal}
         transparent={true}
@@ -330,6 +428,8 @@ export default function SendHoursScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* positive feedback when sent hours */}
       <Snackbar
         visible={snackBarVisible}
         duration={4000}
