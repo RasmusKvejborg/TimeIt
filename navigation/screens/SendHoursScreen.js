@@ -18,7 +18,7 @@ import { ModalEmployeePicker } from "../../ModalEmployeePicker.js";
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 
 export default function SendHoursScreen({ navigation }) {
-  const [data, setData] = React.useState([]);
+  const [registrationsData, setData] = React.useState([]);
   const [oldData, setOldData] = React.useState([]);
 
   // -------------------- consts for snackBar -------------------------------
@@ -69,7 +69,7 @@ export default function SendHoursScreen({ navigation }) {
 
   const deleteValue = async (item) => {
     try {
-      let newList = data;
+      let newList = registrationsData;
       newList = newList.filter((i) => i !== item);
       setData(newList);
       await AsyncStorage.setItem("@registration", JSON.stringify(newList)); // saves a new list where the deleted item has been filtered out
@@ -128,50 +128,72 @@ export default function SendHoursScreen({ navigation }) {
     // });
     // below is a complex version of the above
 
-    if (data && data.length > 0) {
+    if (registrationsData && registrationsData.length > 0) {
       const promises = [];
-      data.forEach((val) => {
-        promises.push(
-          postTimeEntry(
-            val.date,
-            val.startTime,
-            val.endTime,
-            val.totalHours,
-            val.note
-          )
-        ); // calls the postTimeEntry() for each entry
-      });
-      Promise.all(promises)
-        .then((result) => {
-          //  if success, then save oldData, but delete all registrations:
-          setOldData(data);
-          setData();
-          deleteList();
-          onToggleHoursSentSnackBar();
-          console.log("hours have been sent to employee number ", employeeNo);
-        })
-        .catch((e) => {
-          console.log(e);
-          const { status, data, config } = e.response;
 
-          if (status === 401) {
-            Alert.alert(
-              "401 error",
-              "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
-            );
-          } else {
-            Alert.alert(
-              "Something went wrong. Try again later or contact support"
-            );
-          }
+      const activityNumberMissing = registrationsData.some(
+        (val) => !val.activityNumber || !val.projectNumber
+      );
+
+      if (activityNumberMissing) {
+        Alert.alert(
+          "Activity or Project missing",
+          "Add Activity and Project to all your registrations. \n\nYou may have to scroll down to see it."
+        );
+      } else {
+        registrationsData.forEach((val) => {
+          promises.push(
+            postTimeEntry(
+              val.date,
+              val.startTime,
+              val.endTime,
+              val.totalHours,
+              val.activityNumber,
+              val.projectNumber,
+              val.note
+            )
+          ); // calls the postTimeEntry() for each entry
         });
+        Promise.all(promises)
+          .then((result) => {
+            //  if success, then save oldData, but delete all registrations:
+            setOldData(registrationsData);
+            setData();
+            deleteList();
+            onToggleHoursSentSnackBar();
+            console.log("hours have been sent to employee number ", employeeNo);
+          })
+          .catch((e) => {
+            console.log(e);
+            const { status, data, config } = e.response;
+
+            if (status === 401) {
+              Alert.alert(
+                "401 error",
+                "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
+              );
+            } else {
+              Alert.alert(
+                "Something went wrong. Try again later or contact support"
+              );
+            }
+          });
+      }
     } else {
       Alert.alert("No registrations");
     }
   };
   // -------------------------------- post timeentry ---------------------------------------------
 
-  const postTimeEntry = async (date, startTime, endTime, totalHours, note) => {
+  const postTimeEntry = async (
+    date,
+    startTime,
+    endTime,
+    totalHours,
+    activity,
+    project,
+    note
+  ) => {
     const res = await axios.post(
       "https://apis.e-conomic.com/api/v16.2.2/timeentries",
       {
@@ -282,9 +304,10 @@ export default function SendHoursScreen({ navigation }) {
           style={styles.headlineText}
           onPress={() => {
             // deleteList();
-            deleteToken();
+            // deleteToken();
             // deleteEmployee();
             // console.log(xAgreementGrantToken);
+            console.log(registrationsData);
 
             // this is just for testing that I have a deleteList function
           }}
@@ -292,8 +315,9 @@ export default function SendHoursScreen({ navigation }) {
           Send your hours to e-conomic
         </Text>
 
-        {data &&
-          data.map((item, pos) => {
+        {/* sendhourscontainer, itemstyle, itemstylelargetext */}
+        {registrationsData &&
+          registrationsData.map((item, pos) => {
             var formattedDate = JSON.parse(item.date)
               .slice(0, 10)
               .split("-")
@@ -309,10 +333,51 @@ export default function SendHoursScreen({ navigation }) {
                   {item.endTime}
                   {"\t"} hours: {"\t"}
                   {item.totalHours && item.totalHours}
+                  {/* ------------------------ note ------------------------ */}
                   {item.note && ( // && means if truthy then return text
                     <Text style={styles.itemStyleSmallText}>
                       {"\n"}Note: {item.note}
                     </Text>
+                  )}
+                  {/* ------------------------------ if activity and project exists ----------------------------- */}
+                  {item.activityName && (
+                    <Text style={styles.itemStyleSmallText}>
+                      {"\n"}
+                      {item.activityName}
+                    </Text>
+                  )}
+                  {item.projectName && (
+                    <Text style={styles.itemStyleSmallText}>
+                      {"\t"} - {"\t"}
+                      {item.projectName}
+                    </Text>
+                  )}
+                </Text>
+                {/*  if activity doesnt exists and XAGREEMENTTOKEN??? send hours has been pressed, then show button to add activity  */}
+                <Text>
+                  {!item.activityName && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        console.log("HELLO");
+                      }}
+                    >
+                      <Text style={styles.buttonAddActivityOrProject}>
+                        Add Activity
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {/* if not project and XAGREEMENTTOKEN exists */}
+
+                  {!item.projectName && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        console.log("Open ModalProjectPicker");
+                      }}
+                    >
+                      <Text style={styles.buttonAddActivityOrProject}>
+                        Add Project
+                      </Text>
+                    </TouchableOpacity>
                   )}
                 </Text>
                 <View style={styles.trashCan}>

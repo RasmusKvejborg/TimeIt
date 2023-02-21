@@ -1,11 +1,23 @@
 export class Registration {
-  constructor(startTime, endTime, date, totalHours, activity, project, note) {
+  constructor(
+    startTime,
+    endTime,
+    date,
+    totalHours,
+    activityNum,
+    activityName,
+    projectNum,
+    projectName,
+    note
+  ) {
     this.startTime = startTime;
     this.endTime = endTime;
     this.date = date;
     this.totalHours = totalHours;
-    this.activity = activity;
-    this.project = project;
+    this.activity = activityNum;
+    this.activityName = activityName;
+    this.project = projectNum;
+    this.projectName = projectName;
     this.note = note;
   }
 }

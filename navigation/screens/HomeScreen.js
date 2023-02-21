@@ -307,7 +307,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAwareScrollView>
-        <View style={{ minHeight: Dimensions.get("screen").height * 0.85 }}>
+        <View style={{ minHeight: Dimensions.get("screen").height * 0.8 }}>
           {/* <KeyboardAwareScrollView> */}
 
           <TouchableOpacity
@@ -459,6 +459,10 @@ export default function HomeScreen({ navigation }) {
               var startTime = chooseStartTime;
               var endTime = chooseEndTime;
               var dateTime = JSON.stringify(date);
+              var activityNum = activityNumber;
+              var activityName = activityText;
+              var projectNum = projectNumber;
+              var projectName = projectText;
               var note = noteText;
 
               // deleteList();
@@ -475,6 +479,10 @@ export default function HomeScreen({ navigation }) {
                   endTime,
                   dateTime,
                   totalHours,
+                  activityNum,
+                  activityName,
+                  projectNum,
+                  projectName,
                   note
                 );
 
