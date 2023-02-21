@@ -12,6 +12,7 @@ export const styles = StyleSheet.create({
   },
   sendHoursContainer: {
     flex: 1,
+    // alignItems: "center",
     paddingTop: 40,
     // paddingHorizontal: 20,
     // width: WIDTH - 20,
@@ -103,16 +104,17 @@ export const styles = StyleSheet.create({
     backgroundColor: "#DBE2EF",
   },
   snackBar: {
-    position: "absolute",
-    width: "100%",
-    bottom: 80,
-    height: 70,
+    // position: "absolute",
+    // width: "100%",
+    bottom: 120,
+    // height: 70,
     // // alignItems: "baseline",
     // justifyContent: "flex-end",
   },
-  registerHoursText: {
+  headlineText: {
     fontSize: 22,
     marginBottom: 20,
+    alignSelf: "center",
     // color: "#112D4E",
   },
 });

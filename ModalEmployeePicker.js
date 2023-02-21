@@ -71,17 +71,13 @@ const ModalEmployeePicker = (props) => {
         },
       ]}
     >
-      <Text style={styles.registerHoursText}>Find yourself in the list</Text>
+      <Text style={styles.headlineText}>Find yourself in the list</Text>
       <Text>
         Dont see yourself, even if you scroll? Make sure you are created as an
         employee in e-conomic, then close the app completely and try again.
       </Text>
 
-      <ScrollView>
-        {/* <TouchableOpacity onPress={() => props.changeModalVisibility(false)}> */}
-        {employeeOptions}
-        {/* </TouchableOpacity> */}
-      </ScrollView>
+      <ScrollView>{employeeOptions}</ScrollView>
     </SafeAreaView>
   );
 };

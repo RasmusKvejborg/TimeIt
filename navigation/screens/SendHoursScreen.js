@@ -14,8 +14,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Snackbar } from "react-native-paper";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import axios from "axios";
-// this needs to be changed:
 import { ModalEmployeePicker } from "../../ModalEmployeePicker.js";
+import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 
 export default function SendHoursScreen({ navigation }) {
   const [data, setData] = React.useState([]);
@@ -30,25 +30,7 @@ export default function SendHoursScreen({ navigation }) {
   // ------------------------inputtokenmodal---------------------------
   const [showTokenInputModal, setShowTokenInputModal] = React.useState(false);
   const [tokenTekst, setTokenText] = React.useState();
-  const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
 
-  const saveXAppSecretToken = async (tokenData) => {
-    setXAgreementGrantToken(tokenData);
-    await AsyncStorage.setItem("@xAppSecretToken", tokenData);
-    console.log(await AsyncStorage.getItem("@xAppSecretToken"));
-  };
-
-  const deleteToken = async () => {
-    try {
-      console.log(
-        "xAppSecretToken deleted from asyncstorage (it is still in the xAppSecretToken usestate)"
-      );
-      await AsyncStorage.removeItem("@xAppSecretToken");
-      setXAgreementGrantToken();
-    } catch (err) {
-      console.log("error in deletion: ", err);
-    }
-  };
   // ------------------------ employeee picker modal -----------------
   const [emplArray, setEmplArray] = React.useState([]);
   const [employeeNo, SetemployeeNo] = React.useState();
@@ -58,7 +40,6 @@ export default function SendHoursScreen({ navigation }) {
     if (number) {
       SetemployeeNo(number);
       await AsyncStorage.setItem("@Employee", JSON.stringify(number));
-      // console.log(await AsyncStorage.getItem("@Employee"), "hej");
     }
   };
 
@@ -72,6 +53,7 @@ export default function SendHoursScreen({ navigation }) {
     }
   };
   // ------------------API stuff----------------------------------
+  const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
 
   let [response, setResponse] = React.useState();
 
@@ -104,23 +86,6 @@ export default function SendHoursScreen({ navigation }) {
       }
     });
   };
-
-  React.useEffect(() => {
-    // -- getting token from storage:
-    const setXAppSecretTokenImmediately = async () => {
-      setXAgreementGrantToken(await AsyncStorage.getItem("@xAppSecretToken"));
-    };
-    setXAppSecretTokenImmediately();
-    // -- getting employee from storage:
-    const setSavedEmployeeImmediately = async () => {
-      SetemployeeNo(await AsyncStorage.getItem("@Employee"));
-    };
-    setSavedEmployeeImmediately();
-    // --
-    return navigation.addListener("focus", () => {
-      fetchValues();
-    });
-  }, []);
 
   const deleteList = async () => {
     try {
@@ -210,12 +175,14 @@ export default function SendHoursScreen({ navigation }) {
     const res = await axios.post(
       "https://apis.e-conomic.com/api/v16.2.2/timeentries",
       {
-        activityNumber: 1,
+        activityNumber: 1, // NB: There has to be a check when I change this!! Because I can create registrations without that
         date: JSON.parse(date), // this has to be parsed because it is stringified twice by mistake in HomeScreen. format: "2023-02-18T15:23:01Z"
         employeeNumber: employeeNo,
-        projectNumber: 1,
+        projectNumber: 1, // NB: There has to be a check when I change this!! Because I can create registrations without that
         numberOfHours: totalHours,
-        text: startTime + "-" + endTime + (note && " note: " + note),
+        text: note
+          ? startTime + "-" + endTime + " note: " + note
+          : startTime + "-" + endTime,
       },
       config
     );
@@ -266,19 +233,63 @@ export default function SendHoursScreen({ navigation }) {
     response !== undefined && console.log(response);
   };
 
+  //  --------------end of API stuff------------------------------
+  // ---------------XagreementGrantToken---------------------
+  const saveXAgreementGrantToken = async (tokenData) => {
+    setXAgreementGrantToken(tokenData);
+    await AsyncStorage.setItem("@xAppSecretToken", tokenData);
+    console.log(await AsyncStorage.getItem("@xAppSecretToken"));
+  };
+
+  const deleteToken = async () => {
+    try {
+      console.log(
+        "xAppSecretToken deleted from asyncstorage (it is still in the xAppSecretToken usestate)"
+      );
+      await AsyncStorage.removeItem("@xAppSecretToken");
+      setXAgreementGrantToken();
+    } catch (err) {
+      console.log("error in deletion: ", err);
+    }
+  };
+
+  // --------------------------- USE EFFECT -------------------------------
+
+  React.useEffect(() => {
+    // -- getting token from storage:
+    const setXAppSecretTokenImmediately = async () => {
+      setXAgreementGrantToken(await AsyncStorage.getItem("@xAppSecretToken"));
+    };
+    setXAppSecretTokenImmediately();
+    // -- getting employee from storage:
+    const setSavedEmployeeImmediately = async () => {
+      SetemployeeNo(await AsyncStorage.getItem("@Employee"));
+    };
+    setSavedEmployeeImmediately();
+    // --
+    return navigation.addListener("focus", () => {
+      fetchValues();
+    });
+  }, []);
+
+  //  ---------------------- end of useeffect ----------------------------------------
+
   ////////////////////////////////////////////// return ///////////////////////////////////////////////////////////////
   return (
     <View style={styles.sendHoursContainer}>
       <ScrollView>
         <Text
+          style={styles.headlineText}
           onPress={() => {
             // deleteList();
-            // deleteToken();
-            deleteEmployee();
+            deleteToken();
+            // deleteEmployee();
+            // console.log(xAgreementGrantToken);
+
             // this is just for testing that I have a deleteList function
           }}
         >
-          This is the SendHoursScreen!
+          Send your hours to e-conomic
         </Text>
 
         {data &&
@@ -294,9 +305,9 @@ export default function SendHoursScreen({ navigation }) {
                   {formattedDate}
                   {"\n"}
                   {item.startTime}
-                  {"\t"}- {"\t"}
+                  {"\t"}-{"\t"}
                   {item.endTime}
-                  {"\t"}hours:{"\t"}
+                  {"\t"} hours: {"\t"}
                   {item.totalHours && item.totalHours}
                   {item.note && ( // && means if truthy then return text
                     <Text style={styles.itemStyleSmallText}>
@@ -370,7 +381,7 @@ export default function SendHoursScreen({ navigation }) {
                   text: "Open e-conomic",
                   onPress: () => {
                     Linking.openURL(
-                      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01"
+                      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=http%3A%2F%2F5.33.72.206%3A3000%2F"
                     );
                     setShowTokenInputModal(true);
                   },
@@ -428,7 +439,7 @@ export default function SendHoursScreen({ navigation }) {
           />
           <TouchableOpacity
             onPress={() => {
-              saveXAppSecretToken(tokenTekst);
+              saveXAgreementGrantToken(tokenTekst);
               setShowTokenInputModal(false);
             }}
           >

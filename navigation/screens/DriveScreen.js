@@ -125,20 +125,24 @@ export default function DriveScreen({ navigation }) {
   // navigation.navigate("Home")  kan stå inde i onPress
   return (
     <View style={styles.container}>
-      <Text
+      <Text style={styles.headlineText}>This page is under construction.</Text>
+
+      <Text style={styles.itemStyleLargeText}>
+        Keep an eye out for new updates in the app store!
+      </Text>
+
+      {/* ---------- the one button that used to be here --------- */}
+      {/* <Text
         style={styles.button}
         onPress={() => postTimeEntry("nu er det her noten")}
       >
         PostConent!
-      </Text>
-      <Text style={styles.button} onPress={() => getContent()}>
+      </Text> */}
+
+      {/* ---------- the other button that used to be here --------- */}
+      {/* <Text style={styles.button} onPress={() => getContent()}>
         getContent!
-      </Text>
-      {/* {response !== undefined &&   // this is for getting...
-        response.collection.map((value, key) => (
-          <Text key={key}>{value.name}</Text>
-        ))} */}
-      {/* <StatusBar style="auto" /> */}
+      </Text> */}
     </View>
   );
 }
