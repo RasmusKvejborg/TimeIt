@@ -171,8 +171,8 @@ export default function HomeScreen({ navigation }) {
   //--------------------------------------------------------
   // ------------------- get activities and show modal -----------------------------------------
 
-  const showActivitiesModal = () => {
-    getActivities()
+  const showActivitiesModal = async () => {
+    await getActivities()
       .then((act) => {
         setActivityArray(act);
         setIsActivityModalVisible(true);
@@ -184,7 +184,8 @@ export default function HomeScreen({ navigation }) {
         if (status === 401) {
           Alert.alert(
             "401 error",
-            "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
+            "See if there is an update in the app store and try restarting the app"
+            // "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
           );
         } else {
           Alert.alert(

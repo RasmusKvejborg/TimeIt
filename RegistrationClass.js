@@ -4,11 +4,11 @@ export class Registration {
     endTime,
     date,
     totalHours,
-    activityNum,
-    activityName,
-    projectNum,
-    projectName,
-    note
+    activityNum = "",
+    activityName = "",
+    projectNum = "",
+    projectName = "",
+    note = ""
   ) {
     this.startTime = startTime;
     this.endTime = endTime;

@@ -8,18 +8,21 @@ import {
   Linking,
   TextInput,
   Modal,
+  AppState,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Snackbar } from "react-native-paper";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import axios from "axios";
+import axios, { all } from "axios";
 import { ModalEmployeePicker } from "../../ModalEmployeePicker.js";
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
+import { ModalProjectPicker } from "../../ModalProjectPicker.js";
 
 export default function SendHoursScreen({ navigation }) {
-  const [registrationsData, setData] = React.useState([]);
+  const [registrationsData, setRegistrationsData] = React.useState([]);
   const [oldData, setOldData] = React.useState([]);
+  const [appState, setAppState] = React.useState(null);
 
   // -------------------- consts for snackBar -------------------------------
   const [snackBarVisible, setSnackBarVisible] = React.useState(false);
@@ -34,7 +37,8 @@ export default function SendHoursScreen({ navigation }) {
   // ------------------------ employeee picker modal -----------------
   const [emplArray, setEmplArray] = React.useState([]);
   const [employeeNo, SetemployeeNo] = React.useState();
-  const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [isEmployeeModalVisible, setIsEmployeeModalVisible] =
+    React.useState(false);
 
   const saveEmployee = async (number) => {
     if (number) {
@@ -52,10 +56,23 @@ export default function SendHoursScreen({ navigation }) {
       console.log("error in deletion of employee: ", err);
     }
   };
+
+  // ------------------------ activity picker modal -----------------
+  const [activityArray, setActivityArray] = React.useState([]);
+  const [isActModalVisible, setIsActivityModalVisible] = React.useState(false);
+  const [itemKeyForAddingLater, setItemKeyForAddingLater] = React.useState();
+
+  // ------------------------ project picker modal -----------------
+  const [projectArray, setProjectArray] = React.useState([]);
+  const [isProjectModalVisible, setIsProjectModalVisible] =
+    React.useState(false);
+
   // ------------------API stuff----------------------------------
   const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
-
-  let [response, setResponse] = React.useState();
+  const [
+    saveXAgreementGrantTokenHasBeenCalled,
+    setSaveXAgreementGrantTokenHasBeenCalled,
+  ] = React.useState(false);
 
   const config = {
     headers: {
@@ -71,7 +88,7 @@ export default function SendHoursScreen({ navigation }) {
     try {
       let newList = registrationsData;
       newList = newList.filter((i) => i !== item);
-      setData(newList);
+      setRegistrationsData(newList);
       await AsyncStorage.setItem("@registration", JSON.stringify(newList)); // saves a new list where the deleted item has been filtered out
     } catch (err) {
       console.log("eRrOr MsG: deleteValue function: ", err);
@@ -82,7 +99,7 @@ export default function SendHoursScreen({ navigation }) {
     AsyncStorage.getItem("@registration").then((_data) => {
       const data = _data && JSON.parse(_data);
       if (data) {
-        setData(data);
+        setRegistrationsData(data);
       }
     });
   };
@@ -102,7 +119,7 @@ export default function SendHoursScreen({ navigation }) {
     getEmployees()
       .then((empl) => {
         setEmplArray(empl);
-        setIsModalVisible(true);
+        setIsEmployeeModalVisible(true);
       })
       .catch((e) => {
         console.log(e);
@@ -132,7 +149,7 @@ export default function SendHoursScreen({ navigation }) {
       const promises = [];
 
       const activityNumberMissing = registrationsData.some(
-        (val) => !val.activityNumber || !val.projectNumber
+        (val) => !val.activity || !val.project
       );
 
       if (activityNumberMissing) {
@@ -158,7 +175,7 @@ export default function SendHoursScreen({ navigation }) {
           .then((result) => {
             //  if success, then save oldData, but delete all registrations:
             setOldData(registrationsData);
-            setData();
+            setRegistrationsData();
             deleteList();
             onToggleHoursSentSnackBar();
             console.log("hours have been sent to employee number ", employeeNo);
@@ -219,14 +236,6 @@ export default function SendHoursScreen({ navigation }) {
 
   //-------------------------------- end post timeentry end ---------------------------------------------
 
-  const getSingleTimeEntry = () => {
-    axios
-      .get("https://apis.e-conomic.com/api/v16.3.0/timeentries/7", config)
-      .then((result) => {
-        console.log(result.data);
-      });
-  };
-
   // --------------------------Get requests ----------------------
 
   const getEmployees = () => {
@@ -242,25 +251,13 @@ export default function SendHoursScreen({ navigation }) {
       });
   };
 
-  //  --------------------get project ------------------------------
-
-  const getProjectGroups = () => {
-    axios
-      .get("https://apis.e-conomic.com/api/v16.3.0/projectgroups/all", config)
-      .then((result) => {
-        console.log(result.data);
-        setResponse(result);
-      });
-
-    response !== undefined && console.log(response);
-  };
-
   //  --------------end of API stuff------------------------------
   // ---------------XagreementGrantToken---------------------
   const saveXAgreementGrantToken = async (tokenData) => {
+    console.log("saveXAgreementGrantToken called");
+    setSaveXAgreementGrantTokenHasBeenCalled(true);
     setXAgreementGrantToken(tokenData);
     await AsyncStorage.setItem("@xAppSecretToken", tokenData);
-    console.log(await AsyncStorage.getItem("@xAppSecretToken"));
   };
 
   const deleteToken = async () => {
@@ -275,6 +272,127 @@ export default function SendHoursScreen({ navigation }) {
     }
   };
 
+  // ########################## activity and project addlater functions ########################
+  // ------------------- get activities and show modal -----------------------------------------
+  const openModalActivityPicker = async (key) => {
+    setItemKeyForAddingLater(key);
+
+    await getActivities()
+      .then((act) => {
+        setActivityArray(act);
+        setIsActivityModalVisible(true);
+      })
+      .catch((e) => {
+        console.log(e);
+        const { status, data, config } = e.response;
+
+        if (status === 401) {
+          Alert.alert(
+            "401 error",
+            "See if there is an update in the app store and try restarting the app"
+            // "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
+          );
+        } else {
+          Alert.alert(
+            "Something went wrong. Try again later or contact support"
+          );
+        }
+      });
+  };
+
+  // ------------------- get projects and show modal -----------------------------------------
+
+  const openModalProjectPicker = async (key) => {
+    setItemKeyForAddingLater(key);
+
+    await getProjects()
+      .then((projects) => {
+        setProjectArray(projects);
+        setIsProjectModalVisible(true);
+      })
+      .catch((e) => {
+        console.log(e);
+        const { status, data, config } = e.response;
+
+        if (status === 401) {
+          Alert.alert(
+            "401 error"
+            // ,
+            // "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
+          );
+        } else {
+          Alert.alert(
+            "Something went wrong. Try again later or contact support"
+          );
+        }
+      });
+  };
+
+  // --------------------------Get activities ----------------------
+
+  const getActivities = () => {
+    return axios
+      .get("https://apis.e-conomic.com/api/v16.3.0/activities/all", config)
+      .then((result) => {
+        const namesAndNumbers = result.data.items.map((activity) => ({
+          name: activity.name,
+          number: activity.number,
+        }));
+
+        return namesAndNumbers;
+      });
+  };
+
+  //  --------------------get projects ------------------------------
+
+  const getProjects = () => {
+    return axios
+      .get("https://apis.e-conomic.com/api/v16.3.0/projects/all", config)
+      .then((result) => {
+        const projectNamesAndNumbers = result.data.items.map((project) => ({
+          name: project.name,
+          number: project.number,
+        }));
+
+        return projectNamesAndNumbers;
+      });
+  };
+
+  const saveActivityToRegistration = async (
+    key,
+    activityName,
+    activityNumber
+  ) => {
+    let newDataToBeSet = registrationsData[key];
+    newDataToBeSet["activity"] = activityNumber;
+    newDataToBeSet["activityName"] = activityName;
+
+    let alldata = registrationsData;
+    alldata[key] = newDataToBeSet;
+
+    setRegistrationsData(alldata);
+
+    if (alldata) {
+      await AsyncStorage.setItem("@registration", JSON.stringify(alldata));
+    }
+  };
+
+  const saveProjectToRegistration = async (key, projectName, projectNumber) => {
+    let newDataToBeSet = registrationsData[key];
+    newDataToBeSet["project"] = projectNumber;
+    newDataToBeSet["projectName"] = projectName;
+
+    let alldata = registrationsData;
+    alldata[key] = newDataToBeSet;
+
+    setRegistrationsData(alldata);
+
+    if (alldata) {
+      await AsyncStorage.setItem("@registration", JSON.stringify(alldata));
+    }
+  };
+
+  // ########################################### end of activity and project addlater functions #########################################
   // --------------------------- USE EFFECT -------------------------------
 
   React.useEffect(() => {
@@ -294,6 +412,67 @@ export default function SendHoursScreen({ navigation }) {
     });
   }, []);
 
+  //  FOR FETCHING THE TOKEN FROM ECONOMIC
+
+  // This is to make sure we catch the token when redirected from economic.
+  // No matter if the app is open in background or closed, we should get the token when redirected back to app.
+  const onAppStateChange = async (nextAppState) => {
+    if (!xAgreementGrantToken) {
+      console.log(
+        `onAppStateChange: appState from ${appState} to ${nextAppState}`
+      );
+      // cold start
+      if (appState === null) {
+        // console.log("do whatever you need on cold start");
+        Linking.getInitialURL().then((url) => {
+          if (url) {
+            const token = url.split("=")[1];
+            console.log("TOKEN ON COLD START ", token);
+
+            saveXAgreementGrantToken(token);
+          }
+        });
+      }
+      // come to foreground from background
+      else if (
+        appState.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        // console.log("do whatever you need on resume");
+        Linking.getInitialURL().then((url) => {
+          console.log("u r l : ", url);
+          if (url) {
+            const token = url.split("=")[1];
+            console.log("GO TO DRIVE!!==!==!");
+            saveXAgreementGrantToken(token);
+            // navigate to last tab
+          }
+        });
+      }
+      setAppState(nextAppState);
+    }
+  };
+
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener("change", onAppStateChange);
+    if (appState === null) {
+      // The event is not triggered on cold start since the change has already taken place
+      // therefore we need to call it manually:
+      onAppStateChange(AppState.currentState);
+    }
+    return () => {
+      subscription.remove(); //removeEventListener is depricated, this is the same as that.
+    };
+  }, [appState]);
+
+  React.useEffect(() => {
+    if (xAgreementGrantToken && saveXAgreementGrantTokenHasBeenCalled) {
+      console.log("TESTER");
+      showEmployeeSelection();
+    }
+  }, [xAgreementGrantToken]);
+  // end of: -- This is to make sure we catch the token when redirected from economic.--
+
   //  ---------------------- end of useeffect ----------------------------------------
 
   ////////////////////////////////////////////// return ///////////////////////////////////////////////////////////////
@@ -304,10 +483,11 @@ export default function SendHoursScreen({ navigation }) {
           style={styles.headlineText}
           onPress={() => {
             // deleteList();
-            // deleteToken();
-            // deleteEmployee();
+            deleteToken();
+            deleteEmployee();
+
             // console.log(xAgreementGrantToken);
-            console.log(registrationsData);
+            // console.log(registrationsData);
 
             // this is just for testing that I have a deleteList function
           }}
@@ -354,32 +534,41 @@ export default function SendHoursScreen({ navigation }) {
                   )}
                 </Text>
                 {/*  if activity doesnt exists and XAGREEMENTTOKEN??? send hours has been pressed, then show button to add activity  */}
-                <Text>
-                  {!item.activityName && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        console.log("HELLO");
-                      }}
-                    >
-                      <Text style={styles.buttonAddActivityOrProject}>
-                        Add Activity
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  {/* if not project and XAGREEMENTTOKEN exists */}
 
-                  {!item.projectName && (
-                    <TouchableOpacity
-                      onPress={() => {
-                        console.log("Open ModalProjectPicker");
-                      }}
-                    >
-                      <Text style={styles.buttonAddActivityOrProject}>
-                        Add Project
-                      </Text>
-                    </TouchableOpacity>
+                {/* {xAgreementGrantToken&&( */}
+                {(!item.activityName || !item.projectName) && // this is just for removing the first text tag if any of them exists
+                  xAgreementGrantToken && (
+                    <Text>
+                      {!item.activityName && (
+                        <TouchableOpacity
+                          onPress={() => {
+                            console.log(registrationsData);
+
+                            openModalActivityPicker(pos);
+                          }}
+                        >
+                          <Text style={styles.buttonAddActivityOrProject}>
+                            Add Activity
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {/* if not project and XAGREEMENTTOKEN exists */}
+
+                      {!item.projectName && (
+                        <TouchableOpacity
+                          onPress={() => {
+                            openModalProjectPicker(pos);
+                          }}
+                        >
+                          <Text style={styles.buttonAddActivityOrProject}>
+                            Add Project
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </Text>
                   )}
-                </Text>
+
+                {/* -----trashcan----- */}
                 <View style={styles.trashCan}>
                   <TouchableOpacity
                     onPress={() => {
@@ -400,7 +589,6 @@ export default function SendHoursScreen({ navigation }) {
                     }}
                   >
                     <Ionicons
-                      // style={{ textAlign: "center" }}
                       name="trash-outline"
                       size={32}
                       color="#112D4E"
@@ -414,26 +602,11 @@ export default function SendHoursScreen({ navigation }) {
       <TouchableOpacity
         onPress={() => {
           if (xAgreementGrantToken) {
-            // postTimeEntry("halt");
-            // console.log(data);
-
-            // postTimeEntry("hello", "2023-02-14T15:23:01Z");
-            // getContent();
-            console.log("employee number: ", employeeNo);
-
             employeeNo ? postAllTimeEntries() : showEmployeeSelection();
-
-            // console.log(data);
-            // getSingleTimeEntry();
-            // postTimeEntry("hello");
-            // onToggleHoursSentSnackBar(); // should be put inside, only shown if no errors.
-            // TODO all sent registrations should also be greyed out or something and into the bottom...
           } else {
             Alert.alert(
               "Connect to e-conomic",
               "You need to log into your company's e-conomc account.",
-              // "Forbind appen tilco e-conomic",
-              // "Log ind på din (eller din chefs) e-conomic konto",
 
               [
                 {
@@ -446,7 +619,7 @@ export default function SendHoursScreen({ navigation }) {
                   text: "Open e-conomic",
                   onPress: () => {
                     Linking.openURL(
-                      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=http%3A%2F%2F5.33.72.206%3A3000%2F"
+                      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=https%3A%2F%2Fendpointfortimeitapp.herokuapp.com%2F"
                     );
                     setShowTokenInputModal(true);
                   },
@@ -468,17 +641,66 @@ export default function SendHoursScreen({ navigation }) {
       <Modal
         transparent={true}
         animationType="fade"
-        visible={isModalVisible}
-        nRequestClose={() => setIsModalVisible(false)}
+        visible={isEmployeeModalVisible}
+        nRequestClose={() => setIsEmployeeModalVisible(false)}
       >
         <ModalEmployeePicker
           employees={emplArray}
-          isVisible={isModalVisible}
-          setIsModalVisible={setIsModalVisible}
+          isVisible={isEmployeeModalVisible}
+          setIsModalVisible={setIsEmployeeModalVisible}
           setEmployeeData={(number) => {
             saveEmployee(number);
           }}
         ></ModalEmployeePicker>
+      </Modal>
+
+      {/* --------------project and activity picker for adding later --------------- */}
+      {/* Activity picker modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isActModalVisible}
+        nRequestClose={() => setIsActivityModalVisible(false)}
+      >
+        <ModalActivityPicker
+          itemKeyForAddingLater={itemKeyForAddingLater}
+          activities={activityArray}
+          isVisible={isActModalVisible}
+          setIsModalVisible={setIsActivityModalVisible}
+          setActivityData={(activity, key) => {
+            saveActivityToRegistration(key, activity.name, activity.number);
+            // saveRegistrations();
+            // console.log(
+            //   activity.name,
+            //   "activity added on registration number ",
+            //   key
+            // );
+          }}
+        ></ModalActivityPicker>
+      </Modal>
+
+      {/* Project picker modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isProjectModalVisible}
+        nRequestClose={() => setIsProjectModalVisible(false)}
+      >
+        <ModalProjectPicker
+          itemKeyForAddingLater={itemKeyForAddingLater}
+          projects={projectArray}
+          isVisible={isActModalVisible}
+          setIsModalVisible={setIsProjectModalVisible}
+          setProjectData={(project, key) => {
+            saveProjectToRegistration(key, project.name, project.number);
+            // saveRegistrations();
+            // console.log(
+            //   project.name,
+            //   "project added on registration number ",
+            //   key
+            // );
+          }}
+        ></ModalProjectPicker>
       </Modal>
 
       {/* token input modal */}
