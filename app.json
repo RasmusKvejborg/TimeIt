@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TimeIt",
+    "name": "TimeIt Timeregistrering",
     "slug": "TimeIt",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,6 +23,7 @@
       "bundleIdentifier": "com.studsk.TimeIt"
     },
     "android": {
+      "versionCode":1,
       "intentFilters": [
         {
           "action": "VIEW",
