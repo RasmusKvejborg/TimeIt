@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  SafeAreaView,
 } from "react-native";
 
 const OPTIONS = [
@@ -61,7 +62,7 @@ const ModalTimePicker = (props) => {
   });
 
   return (
-    <View
+    <SafeAreaView
       style={[
         styles.modal,
         {
@@ -70,15 +71,28 @@ const ModalTimePicker = (props) => {
         },
       ]}
     >
-      <ScrollView>
-        <TouchableOpacity
-          onPress={() => props.changeModalVisibility(false)}
-          // style={styles.container}
+      <TouchableOpacity
+        style={{
+          // position: "absolute",
+          top: 10,
+          right: WIDTH / 2 - 55,
+          padding: 20,
+          zIndex: 1,
+        }}
+        onPress={() => {
+          props.changeModalVisibility(false);
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 19,
+          }}
         >
-          {option}
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+          Go back
+        </Text>
+      </TouchableOpacity>
+      <ScrollView keyboardShouldPersistTaps="handled">{option}</ScrollView>
+    </SafeAreaView>
   );
 };
 

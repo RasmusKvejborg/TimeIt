@@ -56,7 +56,9 @@ const ModalEmployeePicker = (props) => {
           // onPressItem(empl.number)
         }}
       >
-        <Text style={styles.timePickerTextInside}>{empl.name}</Text>
+        <Text style={styles.ActivityAndProjectPickerTextInside}>
+          {empl.name}
+        </Text>
       </TouchableOpacity>
     );
   });
@@ -71,6 +73,24 @@ const ModalEmployeePicker = (props) => {
         },
       ]}
     >
+      <TouchableOpacity
+        style={{
+          // position: "absolute",
+          top: 5,
+          right: WIDTH / 2 - 55,
+          padding: 20,
+          zIndex: 1,
+        }}
+        onPress={() => props.setIsModalVisible(false)}
+      >
+        <Text
+          style={{
+            fontSize: 19,
+          }}
+        >
+          Go back
+        </Text>
+      </TouchableOpacity>
       <Text style={styles.headlineText}>Find yourself in the list</Text>
       <Text>
         Dont see yourself, even if you scroll? Make sure you are created as an

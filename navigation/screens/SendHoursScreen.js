@@ -132,7 +132,8 @@ export default function SendHoursScreen({ navigation }) {
           );
         } else {
           Alert.alert(
-            "Something went wrong. Try again later or contact support"
+            "Something went wrong. Error 103",
+            "If the issue persists, contact support"
           );
         }
       });
@@ -165,8 +166,8 @@ export default function SendHoursScreen({ navigation }) {
               val.startTime,
               val.endTime,
               val.totalHours,
-              val.activityNumber,
-              val.projectNumber,
+              val.activity,
+              val.project,
               val.note
             )
           ); // calls the postTimeEntry() for each entry
@@ -178,7 +179,6 @@ export default function SendHoursScreen({ navigation }) {
             setRegistrationsData();
             deleteList();
             onToggleHoursSentSnackBar();
-            console.log("hours have been sent to employee number ", employeeNo);
           })
           .catch((e) => {
             console.log(e);
@@ -191,7 +191,8 @@ export default function SendHoursScreen({ navigation }) {
               );
             } else {
               Alert.alert(
-                "Something went wrong. Try again later or contact support"
+                "Something went wrong. Error 104",
+                "Try again later or contact support"
               );
             }
           });
@@ -211,27 +212,24 @@ export default function SendHoursScreen({ navigation }) {
     project,
     note
   ) => {
+    let timeEnt = {
+      activityNumber: activity,
+      date: JSON.parse(date), // this has to be parsed because it is stringified twice by mistake in HomeScreen. format: "2023-02-18T15:23:01Z"
+      employeeNumber: employeeNo,
+      projectNumber: project,
+      numberOfHours: totalHours,
+      text: note
+        ? startTime + "-" + endTime + " note: " + note
+        : startTime + "-" + endTime,
+    };
+
     const res = await axios.post(
       "https://apis.e-conomic.com/api/v16.2.2/timeentries",
-      {
-        activityNumber: 1, // NB: There has to be a check when I change this!! Because I can create registrations without that
-        date: JSON.parse(date), // this has to be parsed because it is stringified twice by mistake in HomeScreen. format: "2023-02-18T15:23:01Z"
-        employeeNumber: employeeNo,
-        projectNumber: 1, // NB: There has to be a check when I change this!! Because I can create registrations without that
-        numberOfHours: totalHours,
-        text: note
-          ? startTime + "-" + endTime + " note: " + note
-          : startTime + "-" + endTime,
-      },
+      timeEnt,
       config
     );
 
     return res;
-    // .then((result) => {
-    //   setResponse(result);
-    //   console.log(result.data);
-    // })
-    // .catch((e) => console.log(e));
   };
 
   //-------------------------------- end post timeentry end ---------------------------------------------
@@ -294,7 +292,8 @@ export default function SendHoursScreen({ navigation }) {
           );
         } else {
           Alert.alert(
-            "Something went wrong. Try again later or contact support"
+            "Something went wrong. Error 100",
+            "Try again later or contact support"
           );
         }
       });
@@ -322,7 +321,8 @@ export default function SendHoursScreen({ navigation }) {
           );
         } else {
           Alert.alert(
-            "Something went wrong. Try again later or contact support"
+            "Something went wrong. Error 101",
+            "If the error persists, contact support"
           );
         }
       });
@@ -416,36 +416,16 @@ export default function SendHoursScreen({ navigation }) {
 
   // This is to make sure we catch the token when redirected from economic.
   // No matter if the app is open in background or closed, we should get the token when redirected back to app.
-  const onAppStateChange = async (nextAppState) => {
+
+  const onAppStateChange = async (nextAppState, url) => {
     if (!xAgreementGrantToken) {
-      console.log(
-        `onAppStateChange: appState from ${appState} to ${nextAppState}`
-      );
       // cold start
       if (appState === null) {
-        // console.log("do whatever you need on cold start");
-        Linking.getInitialURL().then((url) => {
-          if (url) {
-            const token = url.split("=")[1];
+        Linking.getInitialURL().then((urlLink) => {
+          if (urlLink) {
+            const token = urlLink.split("=")[1];
             console.log("TOKEN ON COLD START ", token);
-
             saveXAgreementGrantToken(token);
-          }
-        });
-      }
-      // come to foreground from background
-      else if (
-        appState.match(/inactive|background/) &&
-        nextAppState === "active"
-      ) {
-        // console.log("do whatever you need on resume");
-        Linking.getInitialURL().then((url) => {
-          console.log("u r l : ", url);
-          if (url) {
-            const token = url.split("=")[1];
-            console.log("GO TO DRIVE!!==!==!");
-            saveXAgreementGrantToken(token);
-            // navigate to last tab
           }
         });
       }
@@ -455,19 +435,28 @@ export default function SendHoursScreen({ navigation }) {
 
   React.useEffect(() => {
     const subscription = AppState.addEventListener("change", onAppStateChange);
-    if (appState === null) {
-      // The event is not triggered on cold start since the change has already taken place
-      // therefore we need to call it manually:
-      onAppStateChange(AppState.currentState);
-    }
+
+    const subscription1 = Linking.addEventListener("url", (event) => {
+      if (event.url) {
+        const token = event.url.split("=")[1];
+        saveXAgreementGrantToken(token);
+      }
+
+      if (appState === null) {
+        // The event is not triggered on cold start since the change has already taken place
+        // therefore we need to call it manually:
+        onAppStateChange(AppState.currentState, event.url);
+      }
+    });
+
     return () => {
       subscription.remove(); //removeEventListener is depricated, this is the same as that.
+      subscription1.remove;
     };
   }, [appState]);
 
   React.useEffect(() => {
     if (xAgreementGrantToken && saveXAgreementGrantTokenHasBeenCalled) {
-      console.log("TESTER");
       showEmployeeSelection();
     }
   }, [xAgreementGrantToken]);
@@ -485,9 +474,6 @@ export default function SendHoursScreen({ navigation }) {
             // deleteList();
             deleteToken();
             deleteEmployee();
-
-            // console.log(xAgreementGrantToken);
-            // console.log(registrationsData);
 
             // this is just for testing that I have a deleteList function
           }}
@@ -508,10 +494,7 @@ export default function SendHoursScreen({ navigation }) {
                 <Text style={styles.itemStyleLargeText}>
                   {formattedDate}
                   {"\n"}
-                  {item.startTime}
-                  {"\t"}-{"\t"}
-                  {item.endTime}
-                  {"\t"} hours: {"\t"}
+                  {item.startTime} - {item.endTime} hours:{" "}
                   {item.totalHours && item.totalHours}
                   {/* ------------------------ note ------------------------ */}
                   {item.note && ( // && means if truthy then return text
@@ -528,8 +511,8 @@ export default function SendHoursScreen({ navigation }) {
                   )}
                   {item.projectName && (
                     <Text style={styles.itemStyleSmallText}>
-                      {"\t"} - {"\t"}
-                      {item.projectName}
+                      {" "}
+                      - {item.projectName}
                     </Text>
                   )}
                 </Text>
@@ -542,8 +525,6 @@ export default function SendHoursScreen({ navigation }) {
                       {!item.activityName && (
                         <TouchableOpacity
                           onPress={() => {
-                            console.log(registrationsData);
-
                             openModalActivityPicker(pos);
                           }}
                         >
@@ -574,7 +555,7 @@ export default function SendHoursScreen({ navigation }) {
                     onPress={() => {
                       Alert.alert(
                         "Really delete?",
-                        "Tip: You can take a screenshot before deleting it, just in case.",
+                        "Are you sure you want to delete this registration?",
                         [
                           {
                             text: "Cancel",
@@ -621,7 +602,7 @@ export default function SendHoursScreen({ navigation }) {
                     Linking.openURL(
                       "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=https%3A%2F%2Fendpointfortimeitapp.herokuapp.com%2F"
                     );
-                    setShowTokenInputModal(true);
+                    // setShowTokenInputModal(true);
                   },
                 },
               ]
@@ -632,7 +613,9 @@ export default function SendHoursScreen({ navigation }) {
         {xAgreementGrantToken ? (
           <Text style={styles.buttonSendHours}>Send hours to e-conomic</Text>
         ) : (
-          <Text style={styles.buttonSendHours}>Connect to e-conomic</Text>
+          <Text style={styles.buttonConnectToEconomic}>
+            Connect to e-conomic
+          </Text>
         )}
       </TouchableOpacity>
 
@@ -669,12 +652,6 @@ export default function SendHoursScreen({ navigation }) {
           setIsModalVisible={setIsActivityModalVisible}
           setActivityData={(activity, key) => {
             saveActivityToRegistration(key, activity.name, activity.number);
-            // saveRegistrations();
-            // console.log(
-            //   activity.name,
-            //   "activity added on registration number ",
-            //   key
-            // );
           }}
         ></ModalActivityPicker>
       </Modal>
@@ -693,18 +670,13 @@ export default function SendHoursScreen({ navigation }) {
           setIsModalVisible={setIsProjectModalVisible}
           setProjectData={(project, key) => {
             saveProjectToRegistration(key, project.name, project.number);
-            // saveRegistrations();
-            // console.log(
-            //   project.name,
-            //   "project added on registration number ",
-            //   key
-            // );
           }}
         ></ModalProjectPicker>
       </Modal>
 
       {/* token input modal */}
-      <Modal
+
+      {/* <Modal
         style={styles.modal}
         transparent={true}
         visible={showTokenInputModal}
@@ -733,7 +705,7 @@ export default function SendHoursScreen({ navigation }) {
             <Text style={styles.button}>Submit</Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </Modal> */}
 
       {/* positive feedback when sent hours */}
       <Snackbar

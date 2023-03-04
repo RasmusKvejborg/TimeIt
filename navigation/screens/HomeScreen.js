@@ -23,7 +23,6 @@ import { Snackbar } from "react-native-paper";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
-
 import axios from "axios";
 
 export default function HomeScreen({ navigation }) {
@@ -63,7 +62,6 @@ export default function HomeScreen({ navigation }) {
   const saveLastActivity = async (activity) => {
     if (activity) {
       SetActivityNumber(activity);
-      console.log("Last activity saved: ", activity);
       await AsyncStorage.setItem("@lastActivity", JSON.stringify(activity));
     }
   };
@@ -78,7 +76,6 @@ export default function HomeScreen({ navigation }) {
   const saveLastProject = async (project) => {
     if (project) {
       SetProjectNumber(project.number);
-      console.log("saved project: ", project);
       await AsyncStorage.setItem("@lastProject", JSON.stringify(project));
     }
   };
@@ -103,19 +100,25 @@ export default function HomeScreen({ navigation }) {
     const [startHour, startMinutes] = startTime.split(":").map(Number);
     let [endHour, endMinutes] = endTime.split(":").map(Number);
 
-    if (endHour <= startHour) {
-      endHour += 24; // if someone worked past midnight
-    }
+    // if (endHour <= startHour) {
+    //   endHour += 24; // if someone worked past midnight
+    // }
 
-    const totalMinutes =
+    let totalMinutes =
       endHour * 60 + endMinutes - (startHour * 60 + startMinutes);
+
+    if (totalMinutes <= 0) {
+      console.log(totalMinutes);
+
+      totalMinutes += 1440; // add 24 hours worth of minutes
+      // e.g. if worked from 8 am to 7 am next day = -1 hour. But adding 24 hours = 23 hours
+    }
     return totalMinutes / 60;
   };
   //  ----------------- end of timePicking ---------------------
 
   //------------------------- all below is for date picking ----------------
   const [date, setDate] = React.useState(new Date());
-  const [mode, setMode] = React.useState("date"); // could be just default
   const [show, setShow] = React.useState(false);
   const [dateText, setDateText] = React.useState(
     String("0" + new Date().getDate()).slice(-2) +
@@ -123,10 +126,6 @@ export default function HomeScreen({ navigation }) {
       String("0" + (new Date().getMonth() + 1)).slice(-2)
   );
 
-  const showMode = (currentMode) => {
-    setShow(true);
-    setMode(currentMode);
-  };
   // ------------------------------ end of datepicker end ---------------------
 
   const saveFunction = async (registration) => {
@@ -265,7 +264,11 @@ export default function HomeScreen({ navigation }) {
       );
       if (lastActivity) {
         SetActivityNumber(lastActivity.number);
-        setActivityText(lastActivity.name);
+        if (lastActivity.name.length > 26) {
+          setActivityText(lastActivity.name.substring(0, 26));
+        } else {
+          setActivityText(lastActivity.name);
+        }
       }
     };
     setSavedActivityImmediately();
@@ -277,7 +280,10 @@ export default function HomeScreen({ navigation }) {
       );
       if (lastProject) {
         SetProjectNumber(lastProject.number);
-        setProjectText(lastProject.name);
+
+        if (lastProject.name.length > 26) {
+          setProjectText(lastProject.name.substring(0, 26));
+        } else setProjectText(lastProject.name);
       }
     };
     setSavedProjectImmediately();
@@ -293,17 +299,6 @@ export default function HomeScreen({ navigation }) {
     });
   }, []);
 
-  // const deleteList = async () => {
-  //   try {
-  //     console.log(
-  //       "list deleted from asyncstorage (it is still in the setData list)"
-  //     );
-  //     await AsyncStorage.removeItem("@registration");
-  //   } catch (err) {
-  //     console.log("error in deletion: ", err);
-  //   }
-  // };
-
   // -////////////////////////////////////////////////////////////////////-------------- return() ----------------------//////////////////////////////////////////////////////--
   return (
     <SafeAreaView style={styles.container}>
@@ -311,14 +306,13 @@ export default function HomeScreen({ navigation }) {
         <View style={{ minHeight: Dimensions.get("screen").height * 0.8 }}>
           {/* <KeyboardAwareScrollView> */}
 
-          <TouchableOpacity
-          // onPress={() => (
-          //   AsyncStorage.removeItem("@hasBeenOnboarded"),
-          //   setHasBeenOnboarded(false)
+          {/* <TouchableOpacity */}
+          {/* // onPress={() => (
+
           // )}
-          >
-            <Text style={styles.headlineText}>Register your hours!</Text>
-          </TouchableOpacity>
+          > */}
+          <Text style={styles.headlineText}>Register your hours!</Text>
+          {/* // </TouchableOpacity> */}
 
           <StatusBar style="auto" />
           {/* --------------------------- time picker: Start time ------------------------------ */}
@@ -337,12 +331,12 @@ export default function HomeScreen({ navigation }) {
             </View>
           </TouchableOpacity>
 
-          <Modal
+          {/* <Modal
             transparent={true}
             animationType="fade"
             visible={isModalVisible}
-            nRequestClose={() => changeModalVisibility(false)}
-          ></Modal>
+            onRequestClose={() => changeModalVisibility(false)}
+          ></Modal> */}
           {/* --------------------------- time picker: End time ------------------------------ */}
 
           {/* <Text>Enter end time</Text> */}
@@ -364,7 +358,7 @@ export default function HomeScreen({ navigation }) {
             transparent={true}
             animationType="fade"
             visible={isModalVisible}
-            nRequestClose={() => changeModalVisibility(false)}
+            onRequestClose={() => changeModalVisibility(false)}
           >
             <ModalTimePicker
               changeModalVisibility={changeModalVisibility}
@@ -377,7 +371,8 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity
             onPress={() => {
               onDismissSnackBar();
-              showMode("date"); // this opens the datepicker                                 |
+              // showMode("date"); // this opens the datepicker                                 |
+              setShow(true);
             }}
           >
             <View pointerEvents="none">
@@ -389,7 +384,7 @@ export default function HomeScreen({ navigation }) {
             <DateTimePicker
               testID="dateTimePicker"
               value={date}
-              mode={mode}
+              mode={"date"}
               is24Hour={true}
               display="default"
               onChange={(event, selectedDate) => {
@@ -414,7 +409,6 @@ export default function HomeScreen({ navigation }) {
               onPress={() => {
                 onDismissSnackBar();
                 // console.log(xAgreementGrantToken);
-                // getActivities();
                 showActivitiesModal(); // this opens the Activitypicker.                     |
               }}
             >
@@ -488,8 +482,9 @@ export default function HomeScreen({ navigation }) {
                 );
 
                 hasBeenOnboarded
-                  ? saveFunction(registration) // if its not the first time, it just calls the saveFunction
-                  : Alert.alert(
+                  ? saveFunction(registration)
+                  : // if its not the first time, it just calls the saveFunction
+                    Alert.alert(
                       "First registration? Welcome!",
                       "NB: Your hours are NOT sent until you connect to e-conomic. \n\nYou can do this in the 'Check & Send' tab.\n\nActivities and projects will be unlocked when you connect.",
                       [
@@ -516,7 +511,7 @@ export default function HomeScreen({ navigation }) {
             transparent={true}
             animationType="fade"
             visible={isActModalVisible}
-            nRequestClose={() => setIsActivityModalVisible(false)}
+            onRequestClose={() => setIsActivityModalVisible(false)}
           >
             <ModalActivityPicker
               activities={activityArray}
@@ -535,7 +530,7 @@ export default function HomeScreen({ navigation }) {
             transparent={true}
             animationType="fade"
             visible={isProjectModalVisible}
-            nRequestClose={() => setIsProjectModalVisible(false)}
+            onRequestClose={() => setIsProjectModalVisible(false)}
           >
             <ModalProjectPicker
               projects={projectArray}

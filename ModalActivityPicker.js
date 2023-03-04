@@ -17,7 +17,7 @@ const ModalActivityPicker = (props) => {
 
   const onPressItem = (option) => {
     props.setIsModalVisible(false);
-    props.setActivityData(option, itemKeyForAddingLater);
+    if (option) props.setActivityData(option, itemKeyForAddingLater);
   };
 
   // ----------------------------------
@@ -30,7 +30,9 @@ const ModalActivityPicker = (props) => {
           onPressItem(activity); // this gets sent to props
         }}
       >
-        <Text style={styles.timePickerTextInside}>{activity.name}</Text>
+        <Text style={styles.ActivityAndProjectPickerTextInside}>
+          {activity.name}
+        </Text>
       </TouchableOpacity>
     );
   });
@@ -45,6 +47,24 @@ const ModalActivityPicker = (props) => {
         },
       ]}
     >
+      <TouchableOpacity
+        style={{
+          top: 5,
+          right: WIDTH / 2 - 55,
+          padding: 20,
+          // zIndex: 1,
+        }}
+        onPress={() => props.setIsModalVisible(false)}
+      >
+        <Text
+          style={{
+            fontSize: 19,
+          }}
+        >
+          Go back
+        </Text>
+      </TouchableOpacity>
+
       <Text style={styles.headlineText}>Select activity</Text>
 
       <ScrollView>{activityOptions}</ScrollView>
