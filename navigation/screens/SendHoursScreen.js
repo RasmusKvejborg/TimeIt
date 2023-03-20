@@ -19,6 +19,7 @@ import axios, { all } from "axios";
 import { ModalEmployeePicker } from "../../ModalEmployeePicker.js";
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
+import { getISOWeek } from "date-fns";
 import * as WebBrowser from "expo-web-browser";
 
 export default function SendHoursScreen({ navigation }) {
@@ -252,10 +253,12 @@ export default function SendHoursScreen({ navigation }) {
   //  --------------end of API stuff------------------------------
   // ---------------XagreementGrantToken---------------------
   const saveXAgreementGrantToken = async (tokenData) => {
-    console.log("saveXAgreementGrantToken called");
-    setSaveXAgreementGrantTokenHasBeenCalled(true);
-    setXAgreementGrantToken(tokenData);
-    await AsyncStorage.setItem("@xAppSecretToken", tokenData);
+    if (tokenData) {
+      console.log("saveXAgreementGrantToken called");
+      setSaveXAgreementGrantTokenHasBeenCalled(true);
+      setXAgreementGrantToken(tokenData);
+      await AsyncStorage.setItem("@xAppSecretToken", tokenData);
+    }
   };
 
   const deleteToken = async () => {
@@ -403,6 +406,38 @@ export default function SendHoursScreen({ navigation }) {
   };
 
   // ########################################### end of activity and project addlater functions #########################################
+
+  function getDateText(date) {
+    const months = [
+      "Jan.",
+      "Feb.",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "Sept.",
+      "Oct.",
+      "Nov.",
+      "Dec.",
+    ];
+    let monthName = months[date.getMonth()];
+
+    let today = new Date();
+    let yearOrWeek = "";
+
+    if (date.getFullYear() === today.getFullYear()) {
+      yearOrWeek = `(week ${getISOWeek(date)})`;
+    } else {
+      yearOrWeek = date.getFullYear();
+    }
+
+    return `${date.getDate()} ${monthName} ${yearOrWeek}`;
+  }
+
+  let totalOfAllHours = 0;
+
   // --------------------------- USE EFFECT -------------------------------
 
   React.useEffect(() => {
@@ -516,7 +551,7 @@ export default function SendHoursScreen({ navigation }) {
               // );
               https: Alert.alert(
                 "Share e-conomic connection",
-                `1. Ask employee to download this app \n \n2. Employee opens this link from phone (link copied to clipboard). \n \nhttps://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
+                `1. Ask employee to download this app. \n \n2. Send this link to employee's phone (link copied to clipboard). \n \nhttps://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
               );
             }}
           >
@@ -526,11 +561,13 @@ export default function SendHoursScreen({ navigation }) {
         {/* sendhourscontainer, itemstyle, itemstylelargetext */}
         {registrationsData &&
           registrationsData.map((item, pos) => {
-            var formattedDate = JSON.parse(item.date)
-              .slice(0, 10)
-              .split("-")
-              .reverse()
-              .join("/");
+            var formattedDate = JSON.parse(item.date);
+            //   .slice(0, 10)
+            //   .split("-")
+            //   .reverse()
+            //   .join("/");
+            totalOfAllHours += item.totalHours;
+            formattedDate = getDateText(new Date(formattedDate));
             return (
               <View style={styles.itemStyle} key={pos}>
                 <Text style={styles.itemStyleLargeText}>
@@ -626,6 +663,7 @@ export default function SendHoursScreen({ navigation }) {
             );
           })}
       </ScrollView>
+      <Text style={styles.totalHoursText}>Total hours: {totalOfAllHours}</Text>
       <TouchableOpacity
         onPress={() => {
           if (xAgreementGrantToken) {

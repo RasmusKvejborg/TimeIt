@@ -148,6 +148,13 @@ export const styles = StyleSheet.create({
     alignSelf: "center",
     // color: "#112D4E",
   },
+  totalHoursText: {
+    fontSize: 22,
+    marginTop: 5,
+    marginBottom: 5,
+    marginLeft: 30,
+    // color: "#112D4E",
+  },
   inBetweenHoursText: {
     fontSize: 19,
     alignSelf: "center",

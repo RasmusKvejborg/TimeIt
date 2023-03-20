@@ -21,6 +21,7 @@ import { Snackbar } from "react-native-paper";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
+import { getISOWeek } from "date-fns";
 
 import axios from "axios";
 
@@ -124,32 +125,36 @@ export default function HomeScreen({ navigation }) {
     let dateDetails = date.toLocaleString().split(" "); // split, splits it into an array.
     let weekdayName = dateDetails[0]; // [0] takes only the day.
     const months = [
-      "January",
-      "February",
+      "Jan.",
+      "Feb.",
       "March",
       "April",
       "May",
       "June",
       "July",
       "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "Sept.",
+      "Oct.",
+      "Nov.",
+      "Dec.",
     ];
     let monthName = months[date.getMonth()];
     let today = new Date();
-    let isToday = "";
+    let showTodayWeekOrYear = "";
 
     if (
       date.getFullYear() === today.getFullYear() &&
       date.getMonth() === today.getMonth() &&
       date.getDate() === today.getDate()
     ) {
-      isToday = "(today)";
+      showTodayWeekOrYear = "(today)";
+    } else if (date.getFullYear() === today.getFullYear()) {
+      showTodayWeekOrYear = `(week ${getISOWeek(date)})`;
+    } else {
+      showTodayWeekOrYear = date.getFullYear();
     }
 
-    return `${weekdayName}, ${date.getDate()} ${monthName} ${isToday}`;
+    return `${weekdayName}, ${date.getDate()} ${monthName} ${showTodayWeekOrYear}`;
   }
 
   // ------------------
