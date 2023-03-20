@@ -45,6 +45,19 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
     color: "#112D4E",
   },
+  noteInput: {
+    padding: 8,
+    textAlign: "center",
+    width: 300,
+    fontSize: 24,
+    marginBottom: 20,
+    backgroundColor: "#DBE2EF",
+    borderRadius: 15,
+    overflow: "hidden",
+    color: "#112D4E",
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
   button: {
     marginTop: 20,
     fontSize: 24,
@@ -113,6 +126,7 @@ export const styles = StyleSheet.create({
     fontSize: 22,
     color: "#112D4E",
     backgroundColor: "#DBE2EF",
+    // backgroundColor: "blue",
   },
   ActivityAndProjectPickerTextInside: {
     paddingVertical: 12,
@@ -132,6 +146,13 @@ export const styles = StyleSheet.create({
     fontSize: 22,
     marginBottom: 20,
     alignSelf: "center",
+    // color: "#112D4E",
+  },
+  inBetweenHoursText: {
+    fontSize: 19,
+    alignSelf: "center",
+    marginTop: -20,
+    marginBottom: 5,
     // color: "#112D4E",
   },
 });

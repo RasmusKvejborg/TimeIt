@@ -1,5 +1,4 @@
 import { StatusBar } from "expo-status-bar";
-
 import * as React from "react";
 import {
   View,
@@ -11,8 +10,7 @@ import {
   Modal,
   SafeAreaView,
   Dimensions,
-  KeyboardAvoidingView,
-  Platform,
+  AppState,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import { Registration } from "../../RegistrationClass.js";
@@ -23,6 +21,7 @@ import { Snackbar } from "react-native-paper";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
+
 import axios from "axios";
 
 export default function HomeScreen({ navigation }) {
@@ -31,8 +30,6 @@ export default function HomeScreen({ navigation }) {
   const changeNoteHandler = (val) => {
     setNoteText(val);
   };
-
-  // const { height } = Dimensions.get("window");
 
   // ----------- onboarding--------------
   const saveHasBeenOnboardedNow = () => {
@@ -85,6 +82,7 @@ export default function HomeScreen({ navigation }) {
   const [chooseStartTime, setChooseStartTime] = React.useState();
   const [chooseEndTime, setChooseEndTime] = React.useState();
   const [startOrEndTimeSelected, setSstartOrEndTimeSelected] = React.useState();
+  const [calcHoursShown, setCalcHoursShown] = React.useState();
 
   const changeModalVisibility = (bool, value) => {
     setIsModalVisible(bool);
@@ -95,38 +93,66 @@ export default function HomeScreen({ navigation }) {
     startOrEndTimeSelected === "startTime" && setChooseStartTime(option);
   };
 
-  // ---------------------- calc total hours -----------------------
+  // ---------------------- calc total hours -----------------------------
   const calculateHours = (startTime, endTime) => {
     const [startHour, startMinutes] = startTime.split(":").map(Number);
     let [endHour, endMinutes] = endTime.split(":").map(Number);
 
-    // if (endHour <= startHour) {
-    //   endHour += 24; // if someone worked past midnight
-    // }
-
+    let minutesInAday = 1440;
     let totalMinutes =
       endHour * 60 + endMinutes - (startHour * 60 + startMinutes);
 
     if (totalMinutes <= 0) {
-      console.log(totalMinutes);
-
-      totalMinutes += 1440; // add 24 hours worth of minutes
+      totalMinutes += minutesInAday; // add 24 hours worth of minutes
       // e.g. if worked from 8 am to 7 am next day = -1 hour. But adding 24 hours = 23 hours
     }
     return totalMinutes / 60;
   };
-  //  ----------------- end of timePicking ---------------------
+  //  ----------------- end of timePicking ----------------------------------------------
 
-  //------------------------- all below is for date picking ----------------
-  const [date, setDate] = React.useState(new Date());
+  //------------------------- all below is for date picking -----------------------------
+
+  const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [show, setShow] = React.useState(false);
-  const [dateText, setDateText] = React.useState(
-    String("0" + new Date().getDate()).slice(-2) +
-      "/" +
-      String("0" + (new Date().getMonth() + 1)).slice(-2)
-  );
+  const [dateText, setDateText] = React.useState();
 
-  // ------------------------------ end of datepicker end ---------------------
+  // ------------------------------ end of datepicker end -------------------------------------------
+
+  // ---------------- functions ---------------------
+
+  function getDateText(date) {
+    let dateDetails = date.toLocaleString().split(" "); // split, splits it into an array.
+    let weekdayName = dateDetails[0]; // [0] takes only the day.
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    let monthName = months[date.getMonth()];
+    let today = new Date();
+    let isToday = "";
+
+    if (
+      date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate()
+    ) {
+      isToday = "(today)";
+    }
+
+    return `${weekdayName}, ${date.getDate()} ${monthName} ${isToday}`;
+  }
+
+  // ------------------
 
   const saveFunction = async (registration) => {
     try {
@@ -171,6 +197,7 @@ export default function HomeScreen({ navigation }) {
   // ------------------- get activities and show modal -----------------------------------------
 
   const showActivitiesModal = async () => {
+    // Hvis jeg vælger at lade den lave API kaldet on startup i stedet: Hvis der ikke er nogen activiteter, skal den stadig hente (f.eks ved første gangs brug)
     await getActivities()
       .then((act) => {
         setActivityArray(act);
@@ -254,7 +281,8 @@ export default function HomeScreen({ navigation }) {
 
   React.useEffect(() => {
     const setXAppSecretTokenImmediately = async () => {
-      setXAgreementGrantToken(await AsyncStorage.getItem("@xAppSecretToken"));
+      if (!xAgreementGrantToken)
+        setXAgreementGrantToken(await AsyncStorage.getItem("@xAppSecretToken"));
     };
 
     // Useeffect getting Last used Activity from storage:
@@ -265,6 +293,7 @@ export default function HomeScreen({ navigation }) {
       if (lastActivity) {
         SetActivityNumber(lastActivity.number);
         if (lastActivity.name.length > 26) {
+          // 26 is just the characters that fit in my textinput
           setActivityText(lastActivity.name.substring(0, 26));
         } else {
           setActivityText(lastActivity.name);
@@ -288,31 +317,85 @@ export default function HomeScreen({ navigation }) {
     };
     setSavedProjectImmediately();
 
+    // for setting the date:
+    setDateText(getDateText(new Date()));
+
     // Useeffect hasBeenOnboarded
     const setHasBeenOnboardedImmediately = async () => {
       setHasBeenOnboarded(await AsyncStorage.getItem("@hasBeenOnboarded"));
     };
     setHasBeenOnboardedImmediately();
 
-    return navigation.addListener("focus", () => {
+    // const handleAppStateChange = (state) => {
+    //   if (state === "active") {
+    //     console.log("handleapp", selectedDate);
+
+    //     setDateText(getDateText(selectedDate));
+    //   }
+    // };
+    // const subscription = AppState.addEventListener(
+    //   "change",
+    //   handleAppStateChange
+    // );
+
+    let listener = navigation.addListener("focus", () => {
       setXAppSecretTokenImmediately();
     });
+
+    return () => {
+      if (listener) {
+        listener.remove();
+      }
+      // subscription.remove();
+    };
   }, []);
+
+  // ------------------this useeffect is to update the dateText ----------------------------------
+  React.useEffect(() => {
+    const handleAppStateChange = (state) => {
+      if (state === "active") {
+        setDateText(getDateText(selectedDate));
+      }
+    };
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+    return () => {
+      subscription.remove();
+    };
+  }, [selectedDate]);
+  // ----------- end of regular on-startup useeffect end -------------
+
+  // --------- Useeffect for showing calchours on the spot ---------
+  React.useEffect(() => {
+    chooseEndTime &&
+      chooseStartTime &&
+      setCalcHoursShown(calculateHours(chooseStartTime, chooseEndTime));
+  }, [chooseEndTime, chooseStartTime]);
 
   // -////////////////////////////////////////////////////////////////////-------------- return() ----------------------//////////////////////////////////////////////////////--
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAwareScrollView>
-        <View style={{ minHeight: Dimensions.get("screen").height * 0.8 }}>
+      <KeyboardAwareScrollView
+        ref={(ref) => {
+          this.scrollView = ref;
+        }}
+        maxHeight={Dimensions.get("screen").height * 2}
+      >
+        <View
+          style={{
+            minHeight: Dimensions.get("screen").height * 0.78,
+            marginBottom: 50,
+          }}
+        >
           {/* <KeyboardAwareScrollView> */}
 
-          {/* <TouchableOpacity */}
-          {/* // onPress={() => (
-
-          // )}
+          {/* <TouchableOpacity
+            onPress={() => console.log("handleapb", selectedDate.getDate())}
           > */}
-          <Text style={styles.headlineText}>Register your hours!</Text>
-          {/* // </TouchableOpacity> */}
+          <Text style={styles.headlineText}>Register your hours.</Text>
+          {/* </TouchableOpacity> */}
 
           <StatusBar style="auto" />
           {/* --------------------------- time picker: Start time ------------------------------ */}
@@ -339,7 +422,6 @@ export default function HomeScreen({ navigation }) {
           ></Modal> */}
           {/* --------------------------- time picker: End time ------------------------------ */}
 
-          {/* <Text>Enter end time</Text> */}
           <TouchableOpacity
             onPress={() => {
               onDismissSnackBar();
@@ -353,7 +435,13 @@ export default function HomeScreen({ navigation }) {
               </TextInput>
             </View>
           </TouchableOpacity>
-
+          {chooseEndTime && chooseStartTime && (
+            <Text style={styles.inBetweenHoursText}>
+              {calcHoursShown == 1
+                ? "(" + calcHoursShown + " hour)"
+                : "(" + calcHoursShown + " hours)"}
+            </Text>
+          )}
           <Modal
             transparent={true}
             animationType="fade"
@@ -383,21 +471,42 @@ export default function HomeScreen({ navigation }) {
           {show && ( //                                                                    |
             <DateTimePicker
               testID="dateTimePicker"
-              value={date}
+              value={selectedDate}
               mode={"date"}
               is24Hour={true}
               display="default"
               onChange={(event, selectedDate) => {
                 setShow(false);
-                const chosenDate = selectedDate || date;
-                setDate(chosenDate);
+                const chosenDate = selectedDate || selectedDate;
+                setSelectedDate(chosenDate);
                 let tempDate = new Date(chosenDate);
-                let fDate =
-                  String("0" + tempDate.getDate()).slice(-2) +
-                  "/" +
-                  String("0" + (tempDate.getMonth() + 1)).slice(-2); // old way: tempDate.getDate() + "/" + (tempDate.getMonth() + 1);
 
-                setDateText(fDate);
+                setDateText(getDateText(tempDate));
+
+                // let weekdayAndMonthGenerator = tempDate
+                //   .toLocaleString("default", {
+                //     weekday: "short",
+                //     year: "numeric",
+                //     month: "short",
+                //     day: "numeric",
+                //   })
+                //   .split(" "); // split, splits it into an array.
+                // let weekdayName = weekdayAndMonthGenerator[0]; // [0] takes only the day.
+                // let monthName = weekdayAndMonthGenerator[1];
+                // // console.log("hellso" + weekdayAndMonthGenerator);
+
+                // let fDate =
+                //   weekdayName +
+                //   ", " +
+                //   // String("0" + tempDate.getDate()).slice(-2) +
+                //   String(tempDate.getDate()) +
+                //   " " +
+                //   monthName;
+
+                // // "/" +
+                // // String("0" + (tempDate.getMonth() + 1)).slice(-2); // adding a zero and then slicing 2: if the date isnt two digits, it adds a 0 in front.
+
+                // setDateText(fDate);
               }}
             />
           )}
@@ -444,8 +553,14 @@ export default function HomeScreen({ navigation }) {
             ref={(input) => {
               this.textInput = input;
             }}
-            style={styles.input}
+            onFocus={() => {
+              setTimeout(() => {
+                this.scrollView.scrollToEnd();
+              }, 100);
+            }}
+            style={styles.noteInput}
             onChangeText={(text) => changeNoteHandler(text)}
+            multiline={true}
           />
 
           <TouchableOpacity // submit button
@@ -453,7 +568,7 @@ export default function HomeScreen({ navigation }) {
               Keyboard.dismiss();
               var startTime = chooseStartTime;
               var endTime = chooseEndTime;
-              var dateTime = JSON.stringify(date);
+              var dateTime = JSON.stringify(selectedDate);
               var activityNum = activityNumber;
               var activityName = activityText;
               var projectNum = projectNumber;
@@ -503,7 +618,6 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.button}>Save</Text>
             </View>
           </TouchableOpacity>
-          {/* </KeyboardAwareScrollView> */}
 
           {/* -------------------below is invisible things like modals and popups -------------------*/}
           {/* Activity picker modal */}

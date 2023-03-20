@@ -10,6 +10,13 @@ import {
 } from "react-native";
 
 const OPTIONS = [
+  ["00:00", "00:15", "00:30", "00:45"],
+  ["01:00", "01:15", "01:30", "01:45"],
+  ["02:00", "02:15", "02:30", "02:45"],
+  ["03:00", "03:15", "03:30", "03:45"],
+  ["04:00", "04:15", "04:30", "04:45"],
+  ["05:00", "05:15", "05:30", "05:45"],
+  ["06:00", "06:15", "06:30", "06:45"],
   ["07:00", "07:15", "07:30", "07:45"],
   ["08:00", "08:15", "08:30", "08:45"],
   ["09:00", "09:15", "09:30", "09:45"],
@@ -27,33 +34,40 @@ const OPTIONS = [
   ["21:00", "21:15", "21:30", "21:45"],
   ["22:00", "22:15", "22:30", "22:45"],
   ["23:00", "23:15", "23:30", "23:45"],
-  ["00:00", "00:15", "00:30", "00:45"],
-  ["01:00", "01:15", "01:30", "01:45"],
-  ["02:00", "02:15", "02:30", "02:45"],
-  ["03:00", "03:15", "03:30", "03:45"],
-  ["04:00", "04:15", "04:30", "04:45"],
-  ["05:00", "05:15", "05:30", "05:45"],
-  ["06:00", "06:15", "06:30", "06:45"],
 ];
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 const ModalTimePicker = (props) => {
+  const scrollViewRef = React.useRef();
+
   const onPressItem = (option) => {
     props.changeModalVisibility(false);
     props.setData(option);
   };
 
   const option = OPTIONS.map((item, index) => {
+    let backColor = "#DBE2EF";
+    index > 11 && (backColor = "#BCC8DB");
+
     return (
       <Text key={index} style={styles.optionOutsideArray}>
         {item.map((insideItem, insideIndex) => {
           // this is a loop within a loop to get the OPTIONS to stand on a line for each hour.
+
+          // = "#BCC8DB";
           return (
             <TouchableOpacity
               key={insideIndex}
               onPress={() => onPressItem(insideItem)}
             >
-              <Text style={styles.timePickerTextInside}>{insideItem}</Text>
+              <Text
+                style={[
+                  styles.timePickerTextInside,
+                  { backgroundColor: backColor },
+                ]}
+              >
+                {insideItem}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -91,7 +105,13 @@ const ModalTimePicker = (props) => {
           Go back
         </Text>
       </TouchableOpacity>
-      <ScrollView keyboardShouldPersistTaps="handled">{option}</ScrollView>
+      <ScrollView
+        ref={scrollViewRef}
+        keyboardShouldPersistTaps="handled"
+        contentOffset={{ y: HEIGHT * 0.65 }} // set initial scroll position to 25% of the content height
+      >
+        {option}
+      </ScrollView>
     </SafeAreaView>
   );
 };

@@ -20,7 +20,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.studsk.TimeIt"
+      "bundleIdentifier": "com.studsk.TimeIt",
+      "buildNumber": "2"
     },
     "android": {
       "versionCode":2,

@@ -1,4 +1,5 @@
 import * as React from "react";
+// import * as Clipboard from "expo-clipboard";
 import {
   View,
   Text,
@@ -6,9 +7,9 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
-  TextInput,
   Modal,
   AppState,
+  Platform,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -18,6 +19,7 @@ import axios, { all } from "axios";
 import { ModalEmployeePicker } from "../../ModalEmployeePicker.js";
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
+import * as WebBrowser from "expo-web-browser";
 
 export default function SendHoursScreen({ navigation }) {
   const [registrationsData, setRegistrationsData] = React.useState([]);
@@ -31,8 +33,8 @@ export default function SendHoursScreen({ navigation }) {
 
   const onDismissSnackBar = () => setSnackBarVisible(false);
   // ------------------------inputtokenmodal---------------------------
-  const [showTokenInputModal, setShowTokenInputModal] = React.useState(false);
-  const [tokenTekst, setTokenText] = React.useState();
+  // const [showTokenInputModal, setShowTokenInputModal] = React.useState(false);
+  // const [tokenTekst, setTokenText] = React.useState();
 
   // ------------------------ employeee picker modal -----------------
   const [emplArray, setEmplArray] = React.useState([]);
@@ -218,9 +220,7 @@ export default function SendHoursScreen({ navigation }) {
       employeeNumber: employeeNo,
       projectNumber: project,
       numberOfHours: totalHours,
-      text: note
-        ? startTime + "-" + endTime + " note: " + note
-        : startTime + "-" + endTime,
+      text: note && note,
     };
 
     const res = await axios.post(
@@ -265,6 +265,16 @@ export default function SendHoursScreen({ navigation }) {
       );
       await AsyncStorage.removeItem("@xAppSecretToken");
       setXAgreementGrantToken();
+    } catch (err) {
+      console.log("error in deletion: ", err);
+    }
+  };
+
+  const deleteLastActivityAndProject = async () => {
+    try {
+      console.log("lastactivity og project er deleted");
+      await AsyncStorage.removeItem("@lastActivity");
+      await AsyncStorage.removeItem("@lastProject");
     } catch (err) {
       console.log("error in deletion: ", err);
     }
@@ -407,9 +417,15 @@ export default function SendHoursScreen({ navigation }) {
     };
     setSavedEmployeeImmediately();
     // --
-    return navigation.addListener("focus", () => {
+    let listener = navigation.addListener("focus", () => {
       fetchValues();
     });
+
+    return () => {
+      if (listener) {
+        listener.remove();
+      }
+    };
   }, []);
 
   //  FOR FETCHING THE TOKEN FROM ECONOMIC
@@ -464,6 +480,12 @@ export default function SendHoursScreen({ navigation }) {
 
   //  ---------------------- end of useeffect ----------------------------------------
 
+  const _handlePressButtonAsync = async () => {
+    await WebBrowser.openBrowserAsync(
+      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=https%3A%2F%2Fendpointfortimeitapp.herokuapp.com%2F"
+    );
+  };
+
   ////////////////////////////////////////////// return ///////////////////////////////////////////////////////////////
   return (
     <View style={styles.sendHoursContainer}>
@@ -474,13 +496,33 @@ export default function SendHoursScreen({ navigation }) {
             // deleteList();
             deleteToken();
             deleteEmployee();
+            deleteLastActivityAndProject();
+            // console.log(xAgreementGrantToken);
 
             // this is just for testing that I have a deleteList function
           }}
         >
           Send your hours to e-conomic
         </Text>
+        {xAgreementGrantToken && (
+          <TouchableOpacity
+            onPress={() => {
+              // Clipboard.setStringAsync(
+              //   `https://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
+              // );
 
+              // console.log(
+              //   `https://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
+              // );
+              https: Alert.alert(
+                "Share e-conomic connection",
+                `1. Ask employee to download this app \n \n2. Employee opens this link from phone (link copied to clipboard). \n \nhttps://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
+              );
+            }}
+          >
+            <Text>Share</Text>
+          </TouchableOpacity>
+        )}
         {/* sendhourscontainer, itemstyle, itemstylelargetext */}
         {registrationsData &&
           registrationsData.map((item, pos) => {
@@ -494,8 +536,12 @@ export default function SendHoursScreen({ navigation }) {
                 <Text style={styles.itemStyleLargeText}>
                   {formattedDate}
                   {"\n"}
-                  {item.startTime} - {item.endTime} hours:{" "}
-                  {item.totalHours && item.totalHours}
+                  {item.startTime} - {item.endTime}
+                  {/* hours:{" "}
+                  {item.totalHours && item.totalHours} */}
+                  {item.totalHours == 1
+                    ? " (" + item.totalHours + " hour)"
+                    : " (" + item.totalHours + " hours)"}
                   {/* ------------------------ note ------------------------ */}
                   {item.note && ( // && means if truthy then return text
                     <Text style={styles.itemStyleSmallText}>
@@ -599,10 +645,13 @@ export default function SendHoursScreen({ navigation }) {
                 {
                   text: "Open e-conomic",
                   onPress: () => {
-                    Linking.openURL(
-                      "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=https%3A%2F%2Fendpointfortimeitapp.herokuapp.com%2F"
-                    );
-                    // setShowTokenInputModal(true);
+                    if (Platform.OS === "android") {
+                      Linking.openURL(
+                        "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=https%3A%2F%2Fendpointfortimeitapp.herokuapp.com%2F"
+                      );
+                    } else if (Platform.OS === "ios") {
+                      _handlePressButtonAsync();
+                    }
                   },
                 },
               ]
@@ -673,6 +722,13 @@ export default function SendHoursScreen({ navigation }) {
           }}
         ></ModalProjectPicker>
       </Modal>
+      {/* 
+      <WebView
+        source={{
+          uri: "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=https%3A%2F%2Fendpointfortimeitapp.herokuapp.com%2F",
+        }}
+        onLoad={console.log("loaded!")}
+      ></WebView> */}
 
       {/* token input modal */}
 
