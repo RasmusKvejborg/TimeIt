@@ -162,4 +162,8 @@ export const styles = StyleSheet.create({
     marginBottom: 5,
     // color: "#112D4E",
   },
+  map: {
+    width: "100%",
+    height: "100%",
+  },
 });
