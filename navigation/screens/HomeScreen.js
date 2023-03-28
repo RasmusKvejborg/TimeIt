@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   Dimensions,
   AppState,
+  Platform,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import { Registration } from "../../RegistrationClass.js";
@@ -122,8 +123,9 @@ export default function HomeScreen({ navigation }) {
   // ---------------- functions ---------------------
 
   function getDateText(date) {
-    let dateDetails = date.toLocaleString().split(" "); // split, splits it into an array.
-    let weekdayName = dateDetails[0]; // [0] takes only the day.
+    let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    let weekdayName = weekdays[date.getDay()];
+
     const months = [
       "Jan.",
       "Feb.",
@@ -259,6 +261,7 @@ export default function HomeScreen({ navigation }) {
   // ------------------- get projects and show modal -----------------------------------------
 
   const showProjectsModal = async () => {
+    console.log("hva så");
     await getProjects()
       .then((projects) => {
         setProjectArray(projects);
@@ -331,20 +334,9 @@ export default function HomeScreen({ navigation }) {
     };
     setHasBeenOnboardedImmediately();
 
-    // const handleAppStateChange = (state) => {
-    //   if (state === "active") {
-    //     console.log("handleapp", selectedDate);
-
-    //     setDateText(getDateText(selectedDate));
-    //   }
-    // };
-    // const subscription = AppState.addEventListener(
-    //   "change",
-    //   handleAppStateChange
-    // );
-
     let listener = navigation.addListener("focus", () => {
       setXAppSecretTokenImmediately();
+      setDateText(getDateText(selectedDate)); //this one is also to make sure datetext(today) doesnt say (today) if app has been running in SendhoursScreen past midnight, then it should update when going back to homescreen
     });
 
     return () => {
@@ -355,7 +347,7 @@ export default function HomeScreen({ navigation }) {
     };
   }, []);
 
-  // ------------------this useeffect is to update the dateText ----------------------------------
+  // ------------------this useeffect is to update the dateText (today) if has been running in background past midnigt, then it shouldnt still say today---------------------------
   React.useEffect(() => {
     const handleAppStateChange = (state) => {
       if (state === "active") {
@@ -383,6 +375,13 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAwareScrollView
+        onKeyboardDidShow={() =>
+          setTimeout(() => {
+            this.scrollView.scrollToEnd();
+            console.log("heklo");
+          }, 10)
+        }
+        keyboardShouldPersistTaps="handled"
         ref={(ref) => {
           this.scrollView = ref;
         }}
@@ -390,12 +389,10 @@ export default function HomeScreen({ navigation }) {
       >
         <View
           style={{
-            minHeight: Dimensions.get("screen").height * 0.78,
+            minHeight: Dimensions.get("screen").height * 0.6,
             marginBottom: 50,
           }}
         >
-          {/* <KeyboardAwareScrollView> */}
-
           {/* <TouchableOpacity
             onPress={() => console.log("handleapb", selectedDate.getDate())}
           > */}
@@ -403,61 +400,6 @@ export default function HomeScreen({ navigation }) {
           {/* </TouchableOpacity> */}
 
           <StatusBar style="auto" />
-          {/* --------------------------- time picker: Start time ------------------------------ */}
-          {/* <Text>Enter start time</Text> */}
-          <TouchableOpacity
-            onPress={() => {
-              onDismissSnackBar();
-
-              changeModalVisibility(true, "startTime");
-            }}
-          >
-            <View pointerEvents="none">
-              <TextInput placeholder="Select start time" style={styles.input}>
-                {chooseStartTime}
-              </TextInput>
-            </View>
-          </TouchableOpacity>
-
-          {/* <Modal
-            transparent={true}
-            animationType="fade"
-            visible={isModalVisible}
-            onRequestClose={() => changeModalVisibility(false)}
-          ></Modal> */}
-          {/* --------------------------- time picker: End time ------------------------------ */}
-
-          <TouchableOpacity
-            onPress={() => {
-              onDismissSnackBar();
-
-              changeModalVisibility(true, "endTime");
-            }}
-          >
-            <View pointerEvents="none">
-              <TextInput placeholder="Select end time" style={styles.input}>
-                {chooseEndTime}
-              </TextInput>
-            </View>
-          </TouchableOpacity>
-          {chooseEndTime && chooseStartTime && (
-            <Text style={styles.inBetweenHoursText}>
-              {calcHoursShown == 1
-                ? "(" + calcHoursShown + " hour)"
-                : "(" + calcHoursShown + " hours)"}
-            </Text>
-          )}
-          <Modal
-            transparent={true}
-            animationType="fade"
-            visible={isModalVisible}
-            onRequestClose={() => changeModalVisibility(false)}
-          >
-            <ModalTimePicker
-              changeModalVisibility={changeModalVisibility}
-              setData={setTimeData}
-            ></ModalTimePicker>
-          </Modal>
 
           {/* ------------------------- datepicker --------------------------------------- */}
           {/* <Text>Select date</Text> */}
@@ -479,7 +421,7 @@ export default function HomeScreen({ navigation }) {
               value={selectedDate}
               mode={"date"}
               is24Hour={true}
-              display="default"
+              display={Platform.OS === "ios" ? "inline" : "default"}
               onChange={(event, selectedDate) => {
                 setShow(false);
                 const chosenDate = selectedDate || selectedDate;
@@ -487,35 +429,64 @@ export default function HomeScreen({ navigation }) {
                 let tempDate = new Date(chosenDate);
 
                 setDateText(getDateText(tempDate));
-
-                // let weekdayAndMonthGenerator = tempDate
-                //   .toLocaleString("default", {
-                //     weekday: "short",
-                //     year: "numeric",
-                //     month: "short",
-                //     day: "numeric",
-                //   })
-                //   .split(" "); // split, splits it into an array.
-                // let weekdayName = weekdayAndMonthGenerator[0]; // [0] takes only the day.
-                // let monthName = weekdayAndMonthGenerator[1];
-                // // console.log("hellso" + weekdayAndMonthGenerator);
-
-                // let fDate =
-                //   weekdayName +
-                //   ", " +
-                //   // String("0" + tempDate.getDate()).slice(-2) +
-                //   String(tempDate.getDate()) +
-                //   " " +
-                //   monthName;
-
-                // // "/" +
-                // // String("0" + (tempDate.getMonth() + 1)).slice(-2); // adding a zero and then slicing 2: if the date isnt two digits, it adds a 0 in front.
-
-                // setDateText(fDate);
               }}
             />
           )}
           {/* ----------------------- end of datepicker ---------------------------- */}
+          {/* --------------------------- time picker: Start time ------------------------------ */}
+          {/* <Text>Enter start time</Text> */}
+          <TouchableOpacity
+            onPress={() => {
+              onDismissSnackBar();
+              changeModalVisibility(true, "startTime");
+            }}
+          >
+            <View pointerEvents="none">
+              <TextInput placeholder="Select start time" style={styles.input}>
+                {chooseStartTime}
+              </TextInput>
+            </View>
+          </TouchableOpacity>
+
+          {/* <Modal
+            transparent={true}
+            animationType="fade"
+            visible={isModalVisible}
+            onRequestClose={() => changeModalVisibility(false)}
+          ></Modal> */}
+          {/* --------------------------- time picker: End time ------------------------------ */}
+
+          <TouchableOpacity
+            onPress={() => {
+              onDismissSnackBar();
+              changeModalVisibility(true, "endTime");
+            }}
+          >
+            <View pointerEvents="none">
+              <TextInput placeholder="Select end time" style={styles.input}>
+                {chooseEndTime}
+              </TextInput>
+            </View>
+          </TouchableOpacity>
+          {chooseEndTime && chooseStartTime && (
+            <Text style={styles.inBetweenHoursText}>
+              {calcHoursShown == 1
+                ? "(" + calcHoursShown + " hour)"
+                : calcHoursShown + " hours"}
+            </Text>
+          )}
+          <Modal
+            transparent={true}
+            animationType="fade"
+            visible={isModalVisible}
+            onRequestClose={() => changeModalVisibility(false)}
+          >
+            <ModalTimePicker
+              changeModalVisibility={changeModalVisibility}
+              setData={setTimeData}
+              startTimeOrEndTime={startOrEndTimeSelected}
+            ></ModalTimePicker>
+          </Modal>
 
           {/*  ---------- show activity and project selector only of connected to economic------------ */}
           {xAgreementGrantToken && (
@@ -558,11 +529,11 @@ export default function HomeScreen({ navigation }) {
             ref={(input) => {
               this.textInput = input;
             }}
-            onFocus={() => {
-              setTimeout(() => {
-                this.scrollView.scrollToEnd();
-              }, 100);
-            }}
+            // onFocus={() => {
+            //   setTimeout(() => {
+            //     this.scrollView.scrollToEnd();
+            //   }, 100);
+            // }}
             style={styles.noteInput}
             onChangeText={(text) => changeNoteHandler(text)}
             multiline={true}
@@ -605,8 +576,8 @@ export default function HomeScreen({ navigation }) {
                   ? saveFunction(registration)
                   : // if its not the first time, it just calls the saveFunction
                     Alert.alert(
-                      "First registration? Welcome!",
-                      "NB: Your hours are NOT sent until you connect to e-conomic. \n\nYou can do this in the 'Check & Send' tab.\n\nActivities and projects will be unlocked when you connect.",
+                      "Welcome",
+                      "NB: Your hours are NOT sent until you connect to e-conomic. \n\nYou can do this in the 'Check & Send' tab.",
                       [
                         {
                           text: "OK",
@@ -666,11 +637,11 @@ export default function HomeScreen({ navigation }) {
           <Snackbar
             style={styles.snackBar}
             visible={snackBarVisible}
-            duration={4000}
+            duration={700}
             onDismiss={onDismissSnackBar}
             action={{ label: "Close" }}
           >
-            Registration saved. See your registrations in 'Check & Send'
+            Registration saved.
           </Snackbar>
         </View>
       </KeyboardAwareScrollView>

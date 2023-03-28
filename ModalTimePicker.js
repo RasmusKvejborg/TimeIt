@@ -39,6 +39,7 @@ const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 const ModalTimePicker = (props) => {
   const scrollViewRef = React.useRef();
+  const scrollFarDown = props.startTimeOrEndTime;
 
   const onPressItem = (option) => {
     props.changeModalVisibility(false);
@@ -47,7 +48,7 @@ const ModalTimePicker = (props) => {
 
   const option = OPTIONS.map((item, index) => {
     let backColor = "#DBE2EF";
-    index > 11 && (backColor = "#BCC8DB");
+    index > 11 && (backColor = "#BCC8DB"); // 11 is the number of hours before noon (that should be a different color)
 
     return (
       <Text key={index} style={styles.optionOutsideArray}>
@@ -87,7 +88,6 @@ const ModalTimePicker = (props) => {
     >
       <TouchableOpacity
         style={{
-          // position: "absolute",
           top: 10,
           right: WIDTH / 2 - 55,
           padding: 20,
@@ -108,7 +108,12 @@ const ModalTimePicker = (props) => {
       <ScrollView
         ref={scrollViewRef}
         keyboardShouldPersistTaps="handled"
-        contentOffset={{ y: HEIGHT * 0.65 }} // set initial scroll position to 25% of the content height
+        contentOffset={
+          // set initial scroll position to 25% of the content height
+          scrollFarDown === "endTime"
+            ? { y: HEIGHT * 0.8 }
+            : { y: HEIGHT * 0.57 }
+        }
       >
         {option}
       </ScrollView>

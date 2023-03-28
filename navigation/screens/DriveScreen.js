@@ -1,148 +1,136 @@
 import * as React from "react";
-import { View, Text, ActivityIndicator } from "react-native";
+import { View, Dimensions, TextInput } from "react-native";
 import { styles } from "../../GlobalStyles.js";
-import axios from "axios";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import {
+  GooglePlaceDetail,
+  GooglePlacesAutocomplete,
+} from "react-native-google-places-autocomplete";
+import { googleAPIKey } from "../../Z_Environments.ts";
+import MapViewDirections from "react-native-maps-directions";
+
+const { width, height } = Dimensions.get("window");
+const aspectRatio = width / height;
+const latitudeDelta = 4.2; // zoomed out
+const longitudeDelta = latitudeDelta * aspectRatio;
+const initialPosition = {
+  latitude: 56.7, // middle of Denmark
+  longitude: 10.5039,
+  latitudeDelta: latitudeDelta,
+  longitudeDelta: longitudeDelta,
+};
 
 export default function DriveScreen({ navigation }) {
-  let [isLoading, setIsLoading] = React.useState(true);
-  let [response, setResponse] = React.useState();
+  const [origin, setOrigin] = React.useState();
+  const [destination, setDestination] = React.useState();
+  const [chooseDistance, setchooseDistance] = React.useState(0);
 
-  const config = {
-    headers: {
-      "X-AgreementGrantToken": "QsQJc5VzgFoxJKlaoY4qiEuQ7rL60MQimZhJuCgDUaM1",
-      "X-AppSecretToken": "gGl2gV5qcBMGB71S2xM60ozdiNPDnEdMXdk6z4jmTF01",
-      "Content-Type": "application/json",
-    },
+  const mapRef = React.useRef();
+
+  const moveTo = async (position) => {
+    const camera = await mapRef.current.getCamera();
+    if (camera) {
+      console.log("yallow");
+      camera.center = position;
+      mapRef.current.animateCamera(camera, { duration: 1000 });
+    }
   };
 
-  // Version 2 kunne være fedt hvis man også kunne registrerer
-  // kørsel på projekt baseret på to adresser. Her ville nogle
-  // foretrukne adresser være fint at få listet.
-  // Altså firmaadrsse, hjemmeadresse og kundesdresse.
-
-  const getContent = () => {
-    fetch("https://restapi.e-conomic.com/customers", {
-      headers: {
-        "X-AgreementGrantToken": "QsQJc5VzgFoxJKlaoY4qiEuQ7rL60MQimZhJuCgDUaM1",
-        "X-AppSecretToken": "gGl2gV5qcBMGB71S2xM60ozdiNPDnEdMXdk6z4jmTF01",
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        setResponse(result);
-      });
-
-    response !== undefined &&
-      response.collection.map((value) => console.log(value.name));
+  const edgePaddingValue = 50;
+  const edgePadding = {
+    top: 200,
+    right: edgePaddingValue,
+    bottom: edgePaddingValue,
+    left: edgePaddingValue,
   };
 
-  // -------------------------------------------- POST ----------------------------------------------------------------
-
-  const postContent = () => {
-    axios
-      .post(
-        "https://restapi.e-conomic.com/customers",
-        {
-          currency: "DKK",
-          customerGroup: {
-            customerGroupNumber: 1,
-            self: "https://restapi.e-conomic.com/vat-zones/1?demo",
-          },
-          vatZone: {
-            vatZoneNumber: 1,
-            self: "https://restapi.e-conomic.com/vat-zones/1?demo",
-          },
-          name: "TESTER",
-          paymentTerms: {
-            paymentTermsNumber: 1,
-            self: "https://restapi.e-conomic.com/vat-zones/1?demo",
-          },
-        },
-        config
-      )
-      .then((result) => {
-        setResponse(result);
-      })
-      .catch((e) => console.log(e));
-
-    console.log("hdjfskgsg");
+  const zoomTwoPositions = () => {
+    console.log("testers");
+    mapRef.current.fitToCoordinates([origin, destination], { edgePadding });
   };
 
-  // Gammel måde at gøre det på: (den nye er Axios)
+  const onPlaceSelected = (details, flag) => {
+    console.log("vi flager: ", flag);
+    // console.log("detaljer: ",details);
+    const set = flag === "origin" ? setOrigin : setDestination;
+    const position = {
+      latitude: details.geometry.location.lat,
+      longitude: details.geometry.location.lng,
+    };
+    if (!origin && !destination) {
+      // only move if its not using zoomTwoPositions. Same if I want to make a zoom here.
+      moveTo(position);
+    }
 
-  // fetch("https://restapi.e-conomic.com/customers", {
-  //   body: JSON.stringify({
-  //     currency: "DKK",
-  //     customerGroup: {
-  //       customerGroupNumber: 1,
-  //       self: "https://restapi.e-conomic.com/vat-zones/1?demo",
-  //     },
-  //     vatZone: {
-  //       vatZoneNumber: 1,
-  //       self: "https://restapi.e-conomic.com/vat-zones/1?demo",
-  //     },
-  //     name: "Rasmus",
-  //     paymentTerms: {
-  //       paymentTermsNumber: 1,
-  //       self: "https://restapi.e-conomic.com/vat-zones/1?demo",
-  //     },
-  //   }),
-
-  //   method: "POST",
-
-  //   headers: {
-  //     "X-AgreementGrantToken": "Xb7Jrvqj6dpbPKn0GTLGYbuU6P9D4fHi3OvfHIkEgfs1",
-  //     "X-AppSecretToken": "gGl2gV5qcBMGB71S2xM60ozdiNPDnEdMXdk6z4jmTF01",
-  //     "Content-Type": "application/json",
-  //   },
-  // })
-  // .then((res) => res.json())
-
-  // -------------------------------- post timeentry ---------------------------------------------
-  const postTimeEntry = (note) => {
-    axios
-      .post(
-        "https://apis.e-conomic.com/api/v16.2.2/timeentries",
-        {
-          activityNumber: 1,
-          date: "2023-02-02T15:23:01Z",
-          employeeNumber: 1,
-          projectNumber: 1,
-          numberOfHours: 7,
-          text: { note }, // KAN SGU NOK OS LÆRE AT LAVE DET HER TIL AT VÆRE NOTEN...
-        },
-        config
-      )
-      .then((result) => {
-        setResponse(result);
-      })
-      .catch((e) => console.log(e));
-
-    console.log("hdjfskgsg");
+    set(position);
   };
 
-  // navigation.navigate("Home")  kan stå inde i onPress
+  const calcDistanceOnReady = (args) => {
+    if (args) {
+      setchooseDistance(Math.ceil(args.distance));
+    }
+  };
+
+  React.useEffect(() => {
+    if (origin && destination) {
+      zoomTwoPositions();
+    }
+  }, [origin, destination]);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.headlineText}>This page is under construction.</Text>
-
-      <Text style={styles.itemStyleLargeText}>
-        Keep an eye out for new updates in the app store!
-      </Text>
-
-      {/* ---------- the one button that used to be here --------- */}
-      {/* <Text
-        style={styles.button}
-        onPress={() => postTimeEntry("nu er det her noten")}
+    <View style={styles.driveContainer}>
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        provider={PROVIDER_GOOGLE}
+        initialRegion={initialPosition}
       >
-        PostConent!
-      </Text> */}
+        {origin && <Marker coordinate={origin} />}
+        {destination && <Marker coordinate={destination} />}
+        {origin && destination && (
+          <MapViewDirections
+            origin={origin}
+            destination={destination}
+            apikey={googleAPIKey}
+            strokeColor="#112D4E"
+            strokeWidth={4}
+            onReady={calcDistanceOnReady}
+          />
+        )}
+      </MapView>
 
-      {/* ---------- the other button that used to be here --------- */}
-      {/* <Text style={styles.button} onPress={() => getContent()}>
-        getContent!
-      </Text> */}
+      <View style={styles.driveScreenSearchContainer}>
+        {/*------- origin inputfield -------*/}
+        <GooglePlacesAutocomplete
+          styles={{ textInput: styles.driveScreenSearchInput }}
+          placeholder="From"
+          fetchDetails
+          onPress={(data, details = null) => {
+            onPlaceSelected(details, "origin");
+          }}
+          query={{
+            key: googleAPIKey,
+            language: "en",
+          }}
+        />
+        {/*------- destination inputfield -------*/}
+        <GooglePlacesAutocomplete
+          styles={{ textInput: styles.driveScreenSearchInput }}
+          placeholder="Destination"
+          fetchDetails
+          onPress={async (data, details = null) => {
+            onPlaceSelected(details, "destination");
+          }}
+          query={{
+            key: googleAPIKey,
+            language: "en",
+          }}
+        />
+        {/*------- distance inputfield -------*/}
+        <TextInput placeholder="Distance" style={styles.input}>
+          Distance: {chooseDistance} km
+        </TextInput>
+      </View>
     </View>
   );
 }

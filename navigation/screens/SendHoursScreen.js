@@ -1,5 +1,4 @@
 import * as React from "react";
-// import * as Clipboard from "expo-clipboard";
 import {
   View,
   Text,
@@ -10,6 +9,7 @@ import {
   Modal,
   AppState,
   Platform,
+  Clipboard,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -542,20 +542,16 @@ export default function SendHoursScreen({ navigation }) {
         {xAgreementGrantToken && (
           <TouchableOpacity
             onPress={() => {
-              // Clipboard.setStringAsync(
-              //   `https://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
-              // );
-
-              // console.log(
-              //   `https://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
-              // );
-              https: Alert.alert(
+              Clipboard.setString(
+                `https://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
+              );
+              Alert.alert(
                 "Share e-conomic connection",
                 `1. Ask employee to download this app. \n \n2. Send this link to employee's phone (link copied to clipboard). \n \nhttps://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
               );
             }}
           >
-            <Text>Share</Text>
+            <Text style={{ marginLeft: 10 }}>Share</Text>
           </TouchableOpacity>
         )}
         {/* sendhourscontainer, itemstyle, itemstylelargetext */}

@@ -13,6 +13,10 @@ export const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 40,
   },
+  driveContainer: {
+    flex: 1,
+    alignItems: "center",
+  },
   itemStyle: {
     marginTop: 10,
     paddingVertical: 10,
@@ -136,8 +140,8 @@ export const styles = StyleSheet.create({
     marginHorizontal: 5,
     marginVertical: 7,
     fontSize: 22,
-    color: "#112D4E",
-    backgroundColor: "#DBE2EF",
+    color: "#112D4E", // dark blue
+    backgroundColor: "#DBE2EF", // light blue
   },
   snackBar: {
     bottom: 110,
@@ -166,4 +170,18 @@ export const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  driveScreenSearchContainer: {
+    position: "absolute",
+    width: "90%",
+    top: 40,
+
+    // backgroundColor: "#112D4E", // det er vist shadowen som er background...
+    // shadowColor: "black",
+    // shadowOffset: { width: 2, height: 2 },
+    // shadowOpacity: 0.5,
+    // shadowRadius: 4,
+    // elevation: 4,
+    padding: 8,
+  },
+  driveScreenSearchInput: {},
 });
