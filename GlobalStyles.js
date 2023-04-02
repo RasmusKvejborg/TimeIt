@@ -73,6 +73,20 @@ export const styles = StyleSheet.create({
     backgroundColor: "#112D4E",
     color: "#F9F7F7",
   },
+  driveButton: {
+    // marginTop: 5,
+    fontSize: 20,
+    borderRadius: 4,
+    overflow: "hidden",
+    paddingHorizontal: 15,
+    paddingVertical: 2,
+    // width: 80,
+    textAlign: "center",
+    alignSelf: "center",
+    backgroundColor: "#112D4E",
+    color: "#F9F7F7",
+  },
+
   buttonSendHours: {
     width: WIDTH - 20,
     alignSelf: "center",
@@ -184,4 +198,15 @@ export const styles = StyleSheet.create({
     padding: 8,
   },
   driveScreenSearchInput: {},
+  driveScreenDistanceInput: {
+    padding: 8,
+    // textAlign: "center",
+    // width: 300,
+    // fontSize: 24,
+    marginBottom: 5,
+    backgroundColor: "white",
+    borderRadius: 4,
+    overflow: "hidden",
+    // color: "#112D4E",
+  },
 });

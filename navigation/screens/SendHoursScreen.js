@@ -24,6 +24,9 @@ import * as WebBrowser from "expo-web-browser";
 
 export default function SendHoursScreen({ navigation }) {
   const [registrationsData, setRegistrationsData] = React.useState([]);
+  const [driveRegistrationsData, setDriveRegistrationsData] = React.useState(
+    []
+  );
   const [oldData, setOldData] = React.useState([]);
   const [appState, setAppState] = React.useState(null);
 
@@ -103,6 +106,15 @@ export default function SendHoursScreen({ navigation }) {
       const data = _data && JSON.parse(_data);
       if (data) {
         setRegistrationsData(data);
+      }
+    });
+  };
+
+  const fetchDriveValues = () => {
+    AsyncStorage.getItem("@driveRegistration").then((_data) => {
+      const data = _data && JSON.parse(_data);
+      if (data) {
+        setDriveRegistrationsData(data);
       }
     });
   };
@@ -454,6 +466,7 @@ export default function SendHoursScreen({ navigation }) {
     // --
     let listener = navigation.addListener("focus", () => {
       fetchValues();
+      fetchDriveValues();
     });
 
     return () => {
@@ -655,6 +668,100 @@ export default function SendHoursScreen({ navigation }) {
                     ></Ionicons>
                   </TouchableOpacity>
                 </View>
+              </View>
+            );
+          })}
+
+        <Text>TEST</Text>
+
+        {driveRegistrationsData &&
+          driveRegistrationsData.map((item, pos) => {
+            var formattedDate = JSON.parse(item.dateTime);
+            formattedDate = getDateText(new Date(formattedDate));
+            return (
+              <View style={styles.itemStyle} key={pos}>
+                <Text style={styles.itemStyleLargeText}>
+                  {formattedDate}
+                  {"\n"}
+                  KØRSEL
+                  {/* hours:{" "}
+                  {item.totalHours && item.totalHours} */}
+                  {/* {item.totalHours == 1
+                    ? " (" + item.totalHours + " hour)"
+                    : " (" + item.totalHours + " hours)"} */}
+                  {/* ------------------------ note ------------------------ */}
+                  {/* {item.note && ( // && means if truthy then return text
+                    <Text style={styles.itemStyleSmallText}>
+                      {"\n"}Note: {item.note}
+                    </Text>
+                  )} */}
+                  {/* ------------------------------ if PROJECT exists ----------------------------- */}
+                  {item.projectName && (
+                    <Text style={styles.itemStyleSmallText}>
+                      {" "}
+                      - {item.projectName}
+                    </Text>
+                  )}
+                </Text>
+
+                {/* {xAgreementGrantToken&&( */}
+                {/* {(!item.activityName || !item.projectName) && // this is just for removing the first text tag if any of them exists
+                  xAgreementGrantToken && (
+                    <Text>
+                      {!item.activityName && (
+                        <TouchableOpacity
+                          onPress={() => {
+                            openModalActivityPicker(pos);
+                          }}
+                        >
+                          <Text style={styles.buttonAddActivityOrProject}>
+                            Add Activity
+                          </Text>
+                        </TouchableOpacity>
+                      )} */}
+                {/* if not project and XAGREEMENTTOKEN exists */}
+
+                {/* {!item.projectName && (
+                        <TouchableOpacity
+                          onPress={() => {
+                            openModalProjectPicker(pos);
+                          }}
+                        >
+                          <Text style={styles.buttonAddActivityOrProject}>
+                            Add Project
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </Text>
+                  )} */}
+
+                {/* -----trashcan----- */}
+                {/* <View style={styles.trashCan}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      Alert.alert(
+                        "Really delete?",
+                        "Are you sure you want to delete this registration?",
+                        [
+                          {
+                            text: "Cancel",
+                            onPress: () => console.log("cancel pressed"),
+                          },
+                          {
+                            text: "Delete",
+                            onPress: () => deleteValue(item),
+                          },
+                        ]
+                      );
+                    }}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={32}
+                      color="#112D4E"
+                    ></Ionicons>
+                  </TouchableOpacity>
+                </View> */}
               </View>
             );
           })}

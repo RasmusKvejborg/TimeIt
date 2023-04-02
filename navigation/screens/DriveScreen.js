@@ -1,5 +1,15 @@
 import * as React from "react";
-import { View, Dimensions, TextInput } from "react-native";
+import {
+  View,
+  Dimensions,
+  TextInput,
+  Text,
+  Switch,
+  TouchableOpacity,
+  Keyboard,
+  Alert,
+  Modal,
+} from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import {
@@ -8,6 +18,10 @@ import {
 } from "react-native-google-places-autocomplete";
 import { googleAPIKey } from "../../Z_Environments.ts";
 import MapViewDirections from "react-native-maps-directions";
+import { ModalProjectPicker } from "../../ModalProjectPicker.js";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 const { width, height } = Dimensions.get("window");
 const aspectRatio = width / height;
@@ -23,35 +37,44 @@ const initialPosition = {
 export default function DriveScreen({ navigation }) {
   const [origin, setOrigin] = React.useState();
   const [destination, setDestination] = React.useState();
-  const [chooseDistance, setchooseDistance] = React.useState(0);
+  const [chooseDistance, setChooseDistance] = React.useState(0);
+  const [swittchIsEnabled, setSwittchIsEnabled] = React.useState(false);
+  // const [noteText, setNoteText] = React.useState();
+  const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
+  // ------------------------ project picker modal -----------------
+  const [projectArray, setProjectArray] = React.useState([]);
+  const [projectNumber, SetProjectNumber] = React.useState();
+  const [isProjectModalVisible, setIsProjectModalVisible] =
+    React.useState(false);
+  const [projectText, setProjectText] = React.useState();
+  // --------------------------date picker modal--------------------
+  const [selectedDate, setSelectedDate] = React.useState(new Date());
+  const [show, setShow] = React.useState(false);
+  const [dateText, setDateText] = React.useState();
 
   const mapRef = React.useRef();
 
   const moveTo = async (position) => {
     const camera = await mapRef.current.getCamera();
     if (camera) {
-      console.log("yallow");
       camera.center = position;
       mapRef.current.animateCamera(camera, { duration: 1000 });
     }
   };
 
-  const edgePaddingValue = 50;
+  const edgePaddingValue = 15;
   const edgePadding = {
-    top: 200,
+    top: 285,
     right: edgePaddingValue,
     bottom: edgePaddingValue,
     left: edgePaddingValue,
   };
 
   const zoomTwoPositions = () => {
-    console.log("testers");
     mapRef.current.fitToCoordinates([origin, destination], { edgePadding });
   };
 
   const onPlaceSelected = (details, flag) => {
-    console.log("vi flager: ", flag);
-    // console.log("detaljer: ",details);
     const set = flag === "origin" ? setOrigin : setDestination;
     const position = {
       latitude: details.geometry.location.lat,
@@ -67,15 +90,163 @@ export default function DriveScreen({ navigation }) {
 
   const calcDistanceOnReady = (args) => {
     if (args) {
-      setchooseDistance(Math.ceil(args.distance));
+      setChooseDistance(Math.ceil(args.distance));
     }
   };
 
+  const toggleSwitch = () => {
+    setSwittchIsEnabled((previousState) => !previousState);
+    if (swittchIsEnabled) {
+      console.log("button turned off");
+    } else {
+      console.log("button turned on");
+    }
+  };
+
+  //  --------------------get projects ------------------------------
+
+  const getProjects = () => {
+    return axios
+      .get("https://apis.e-conomic.com/api/v16.3.0/projects/all", config)
+      .then((result) => {
+        const projectNamesAndNumbers = result.data.items.map((project) => ({
+          name: project.name,
+          number: project.number,
+        }));
+
+        return projectNamesAndNumbers;
+      });
+  };
+
+  // ------------------- get projects and show modal -----------------------------------------
+
+  const showProjectsModal = async () => {
+    await getProjects()
+      .then((projects) => {
+        setProjectArray(projects);
+        setIsProjectModalVisible(true);
+      })
+      .catch((e) => {
+        console.log(e);
+        const { status, data, config } = e.response;
+
+        if (status === 401) {
+          Alert.alert("401 error");
+        } else {
+          Alert.alert(
+            "Something went wrong. Try again later or contact support"
+          );
+        }
+      });
+  };
+
+  // ------------------API for getting project----------------------------------
+
+  const config = {
+    headers: {
+      "X-AppSecretToken": "vf0W9meQJEx3uK7mzjYEZhEbfTYWnSswmMzTIDeLWNI1",
+      "X-AgreementGrantToken": xAgreementGrantToken,
+      "Content-Type": "application/json",
+    },
+  };
+
+  // ---------- function -------------
+  function getDateText(date) {
+    const months = [
+      "Jan.",
+      "Feb.",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "Aug.",
+      "Sept.",
+      "Oct.",
+      "Nov.",
+      "Dec.",
+    ];
+    let monthName = months[date.getMonth()];
+
+    return `${date.getDate()} ${monthName}`;
+  }
+
+  const saveLastProject = async (project) => {
+    if (project) {
+      SetProjectNumber(project.number);
+      await AsyncStorage.setItem("@lastProject", JSON.stringify(project));
+    }
+  };
+
+  const saveFunction = async (registration) => {
+    console.log(registration);
+    try {
+      let prevItems = await AsyncStorage.getItem("@driveRegistration");
+
+      if (prevItems !== null) {
+        newItems = JSON.parse(prevItems);
+        newItems.push(registration);
+
+        newItems.sort((a, b) =>
+          a.date == b.date
+            ? a.startTime < b.startTime
+              ? 1
+              : -1
+            : a.date < b.date
+            ? 1
+            : -1
+        ); // sorts the list datewise
+      } else {
+        newItems = [registration];
+      }
+      const value = await AsyncStorage.setItem(
+        "@driveRegistration",
+        JSON.stringify(newItems)
+      );
+      // onToggleSnackBar()
+    } catch (error) {
+      console.log("eRrOr MsG: ", error);
+    }
+  };
+
+  //  --------------- USE EFFECTS ----------------------
   React.useEffect(() => {
     if (origin && destination) {
       zoomTwoPositions();
     }
   }, [origin, destination]);
+
+  React.useEffect(() => {
+    const setXAppSecretTokenImmediately = async () => {
+      if (!xAgreementGrantToken)
+        setXAgreementGrantToken(await AsyncStorage.getItem("@xAppSecretToken"));
+    };
+
+    const setSavedProjectImmediately = async () => {
+      const lastProject = JSON.parse(
+        await AsyncStorage.getItem("@lastProject")
+      );
+      if (lastProject) {
+        SetProjectNumber(lastProject.number);
+
+        if (lastProject.name.length > 26) {
+          setProjectText(lastProject.name.substring(0, 26));
+        } else setProjectText(lastProject.name);
+      }
+    };
+
+    let listener = navigation.addListener("focus", () => {
+      setXAppSecretTokenImmediately();
+      setDateText(getDateText(selectedDate));
+      setSavedProjectImmediately();
+    });
+
+    return () => {
+      if (listener) {
+        listener.remove();
+      }
+    };
+  }, []);
 
   return (
     <View style={styles.driveContainer}>
@@ -127,10 +298,132 @@ export default function DriveScreen({ navigation }) {
           }}
         />
         {/*------- distance inputfield -------*/}
-        <TextInput placeholder="Distance" style={styles.input}>
-          Distance: {chooseDistance} km
-        </TextInput>
+        <View
+          style={[
+            styles.driveScreenDistanceInput,
+            { flexDirection: "row", alignItems: "center" },
+          ]}
+        >
+          <Text>Distance (km): </Text>
+          <TextInput
+            style={{ width: 80, fontSize: 16 }}
+            defaultValue={String(chooseDistance)}
+            onChangeText={(text) => console.log(text)} // changeNoteHandler(text)}
+            keyboardType={"numeric"}
+          />
+          <Text>Both ways:</Text>
+          <Switch
+            style={{ marginVertical: -8 }}
+            onValueChange={toggleSwitch}
+            value={swittchIsEnabled}
+          ></Switch>
+        </View>
+        {/*------- Project and Date inputfields -------*/}
+        <View
+          style={[
+            styles.driveScreenDistanceInput,
+            { flexDirection: "row", alignItems: "center" },
+          ]}
+        >
+          <Text>Project: </Text>
+
+          <TouchableOpacity
+            onPress={() => {
+              xAgreementGrantToken
+                ? showProjectsModal()
+                : Alert.alert(
+                    "Connect to economic before selecting a project",
+                    "You can do that in 'check & send'"
+                  );
+              console.log(xAgreementGrantToken);
+            }}
+          >
+            <View pointerEvents="none">
+              <TextInput
+                style={{ width: 150 }}
+                placeholder="Select project"
+                defaultValue={projectText}
+              ></TextInput>
+            </View>
+          </TouchableOpacity>
+          <Text>Date: </Text>
+          <TouchableOpacity
+            onPress={() => {
+              setShow(true);
+            }}
+          >
+            <View pointerEvents="none">
+              <TextInput style={{ width: 100 }} defaultValue={dateText} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {show && (
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={selectedDate}
+            mode={"date"}
+            is24Hour={true}
+            display={Platform.OS === "ios" ? "inline" : "default"}
+            onChange={(event, selectedDate) => {
+              setShow(false);
+              const chosenDate = selectedDate;
+              setSelectedDate(chosenDate);
+              let tempDate = new Date(chosenDate);
+
+              setDateText(getDateText(tempDate));
+            }}
+          />
+        )}
+
+        {/* ----------- save button ---------- */}
+
+        <TouchableOpacity // submit button
+          onPress={() => {
+            Keyboard.dismiss();
+
+            var registration = {
+              dateTime: JSON.stringify(selectedDate),
+              distance: chooseDistance,
+              projectNum: projectNumber,
+              // from: details
+            };
+
+            // deleteList();
+            if (origin === undefined) {
+              Alert.alert("Please fill out the 'From' field");
+            } else if (destination === undefined) {
+              Alert.alert("Please thy a destination");
+            } else if (chooseDistance <= 0) {
+              Alert.alert("Km cannot be less than one");
+            } else {
+              console.log("abcs");
+              saveFunction(registration);
+            }
+          }}
+        >
+          <View>
+            <Text style={styles.driveButton}>Save</Text>
+          </View>
+        </TouchableOpacity>
       </View>
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isProjectModalVisible}
+        onRequestClose={() => setIsProjectModalVisible(false)}
+      >
+        <ModalProjectPicker
+          projects={projectArray}
+          // isVisible={isActModalVisible}
+          setIsModalVisible={setIsProjectModalVisible}
+          setProjectData={(project) => {
+            saveLastProject(project);
+            setProjectText(project.name);
+            SetProjectNumber(project.number);
+          }}
+        ></ModalProjectPicker>
+      </Modal>
     </View>
   );
 }

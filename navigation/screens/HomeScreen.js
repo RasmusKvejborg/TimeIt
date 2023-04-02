@@ -162,6 +162,7 @@ export default function HomeScreen({ navigation }) {
   // ------------------
 
   const saveFunction = async (registration) => {
+    console.log("regi", registration);
     try {
       let prevItems = await AsyncStorage.getItem("@registration");
 
@@ -261,7 +262,6 @@ export default function HomeScreen({ navigation }) {
   // ------------------- get projects and show modal -----------------------------------------
 
   const showProjectsModal = async () => {
-    console.log("hva så");
     await getProjects()
       .then((projects) => {
         setProjectArray(projects);
@@ -375,12 +375,13 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAwareScrollView
-        onKeyboardDidShow={() =>
+        label="homeScreenScroll"
+        onKeyboardDidShow={() => {
           setTimeout(() => {
             this.scrollView.scrollToEnd();
             console.log("heklo");
-          }, 10)
-        }
+          }, 10);
+        }}
         keyboardShouldPersistTaps="handled"
         ref={(ref) => {
           this.scrollView = ref;
@@ -406,7 +407,6 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity
             onPress={() => {
               onDismissSnackBar();
-              // showMode("date"); // this opens the datepicker                                 |
               setShow(true);
             }}
           >
@@ -424,7 +424,7 @@ export default function HomeScreen({ navigation }) {
               display={Platform.OS === "ios" ? "inline" : "default"}
               onChange={(event, selectedDate) => {
                 setShow(false);
-                const chosenDate = selectedDate || selectedDate;
+                const chosenDate = selectedDate;
                 setSelectedDate(chosenDate);
                 let tempDate = new Date(chosenDate);
 
@@ -624,7 +624,7 @@ export default function HomeScreen({ navigation }) {
           >
             <ModalProjectPicker
               projects={projectArray}
-              isVisible={isActModalVisible}
+              // isVisible={isActModalVisible}
               setIsModalVisible={setIsProjectModalVisible}
               setProjectData={(project) => {
                 saveLastProject(project);
