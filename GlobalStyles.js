@@ -27,6 +27,18 @@ export const styles = StyleSheet.create({
     width: WIDTH - 20,
     alignSelf: "center",
   },
+
+  driveItemStyle: {
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 19,
+    backgroundColor: "#DBE2EF",
+    borderRadius: 15,
+    overflow: "hidden",
+    width: WIDTH - 20,
+    alignSelf: "center",
+  },
+
   itemStyleLargeText: {
     fontSize: 24,
   },

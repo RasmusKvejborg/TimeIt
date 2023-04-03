@@ -22,6 +22,7 @@ import { ModalProjectPicker } from "../../ModalProjectPicker.js";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import decorateMapComponent from "react-native-maps/lib/decorateMapComponent.js";
 
 const { width, height } = Dimensions.get("window");
 const aspectRatio = width / height;
@@ -76,6 +77,15 @@ export default function DriveScreen({ navigation }) {
 
   const onPlaceSelected = (details, flag) => {
     const set = flag === "origin" ? setOrigin : setDestination;
+    console.log(details);
+    console.log(
+      details.address_components[1].long_name +
+        " " +
+        details.address_components[0].long_name +
+        ", " +
+        details.address_components[3].long_name
+    );
+
     const position = {
       latitude: details.geometry.location.lat,
       longitude: details.geometry.location.lng,
@@ -127,7 +137,7 @@ export default function DriveScreen({ navigation }) {
         setIsProjectModalVisible(true);
       })
       .catch((e) => {
-        console.log(e);
+        console.log("err:", e);
         const { status, data, config } = e.response;
 
         if (status === 401) {
@@ -167,7 +177,6 @@ export default function DriveScreen({ navigation }) {
       "Dec.",
     ];
     let monthName = months[date.getMonth()];
-
     return `${date.getDate()} ${monthName}`;
   }
 
@@ -179,7 +188,7 @@ export default function DriveScreen({ navigation }) {
   };
 
   const saveFunction = async (registration) => {
-    console.log(registration);
+    console.log("registration: ", registration);
     try {
       let prevItems = await AsyncStorage.getItem("@driveRegistration");
 
@@ -205,8 +214,13 @@ export default function DriveScreen({ navigation }) {
       );
       // onToggleSnackBar()
     } catch (error) {
+      Alert.alert("Something went wrong", "error code 428"); // muligvis fordi newItems aldrig har et "let" foran
       console.log("eRrOr MsG: ", error);
     }
+  };
+
+  const changeDistanceHandler = (val) => {
+    setChooseDistance(val);
   };
 
   //  --------------- USE EFFECTS ----------------------
@@ -277,6 +291,7 @@ export default function DriveScreen({ navigation }) {
           placeholder="From"
           fetchDetails
           onPress={(data, details = null) => {
+            console.log("data:: ", data);
             onPlaceSelected(details, "origin");
           }}
           query={{
@@ -308,7 +323,7 @@ export default function DriveScreen({ navigation }) {
           <TextInput
             style={{ width: 80, fontSize: 16 }}
             defaultValue={String(chooseDistance)}
-            onChangeText={(text) => console.log(text)} // changeNoteHandler(text)}
+            onChangeText={(text) => changeDistanceHandler(text)}
             keyboardType={"numeric"}
           />
           <Text>Both ways:</Text>
@@ -335,7 +350,6 @@ export default function DriveScreen({ navigation }) {
                     "Connect to economic before selecting a project",
                     "You can do that in 'check & send'"
                   );
-              console.log(xAgreementGrantToken);
             }}
           >
             <View pointerEvents="none">
@@ -385,8 +399,10 @@ export default function DriveScreen({ navigation }) {
             var registration = {
               dateTime: JSON.stringify(selectedDate),
               distance: chooseDistance,
-              projectNum: projectNumber,
-              // from: details
+              projectNumber: projectNumber,
+              projectName: projectText,
+              from: origin,
+              destination: destination,
             };
 
             // deleteList();
@@ -397,7 +413,6 @@ export default function DriveScreen({ navigation }) {
             } else if (chooseDistance <= 0) {
               Alert.alert("Km cannot be less than one");
             } else {
-              console.log("abcs");
               saveFunction(registration);
             }
           }}

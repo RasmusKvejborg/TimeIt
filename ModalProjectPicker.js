@@ -13,11 +13,13 @@ const HEIGHT = Dimensions.get("window").height;
 const WIDTH = Dimensions.get("window").width;
 
 const ModalProjectPicker = (props) => {
-  const { isVisible, projects, itemKeyForAddingLater } = props;
+  const { isVisible, projects, itemKeyForAddingLater, projectFlag } = props;
 
   const onPressItem = (option) => {
     props.setIsModalVisible(false);
-    if (option) props.setProjectData(option, itemKeyForAddingLater);
+    if (option) {
+      props.setProjectData(option, itemKeyForAddingLater, projectFlag);
+    }
   };
 
   // ----------------------------------

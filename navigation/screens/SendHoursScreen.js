@@ -67,6 +67,7 @@ export default function SendHoursScreen({ navigation }) {
   const [activityArray, setActivityArray] = React.useState([]);
   const [isActModalVisible, setIsActivityModalVisible] = React.useState(false);
   const [itemKeyForAddingLater, setItemKeyForAddingLater] = React.useState();
+  const [projectFlag, setProjectFlag] = React.useState();
 
   // ------------------------ project picker modal -----------------
   const [projectArray, setProjectArray] = React.useState([]);
@@ -98,6 +99,17 @@ export default function SendHoursScreen({ navigation }) {
       await AsyncStorage.setItem("@registration", JSON.stringify(newList)); // saves a new list where the deleted item has been filtered out
     } catch (err) {
       console.log("eRrOr MsG: deleteValue function: ", err);
+    }
+  };
+
+  const deleteDriveValue = async (item) => {
+    try {
+      let newList = driveRegistrationsData;
+      newList = newList.filter((i) => i !== item);
+      setDriveRegistrationsData(newList);
+      await AsyncStorage.setItem("@driveRegistration", JSON.stringify(newList)); // saves a new list where the deleted item has been filtered out
+    } catch (err) {
+      console.log("eRrOr MsG: deleteDriveValue function: ", err);
     }
   };
 
@@ -168,7 +180,11 @@ export default function SendHoursScreen({ navigation }) {
         (val) => !val.activity || !val.project
       );
 
-      if (activityNumberMissing) {
+      const DriveProjectNumberMissing = driveRegistrationsData.some(
+        (val) => !val.projectNumber
+      );
+
+      if (activityNumberMissing || DriveProjectNumberMissing) {
         Alert.alert(
           "Activity or Project missing",
           "Add Activity and Project to all your registrations. \n\nYou may have to scroll down to see it."
@@ -196,7 +212,7 @@ export default function SendHoursScreen({ navigation }) {
             onToggleHoursSentSnackBar();
           })
           .catch((e) => {
-            console.log(e);
+            console.log("error..", e);
             const { status, data, config } = e.response;
 
             if (status === 401) {
@@ -306,7 +322,7 @@ export default function SendHoursScreen({ navigation }) {
         setIsActivityModalVisible(true);
       })
       .catch((e) => {
-        console.log(e);
+        console.log("err:", e);
         const { status, data, config } = e.response;
 
         if (status === 401) {
@@ -326,8 +342,9 @@ export default function SendHoursScreen({ navigation }) {
 
   // ------------------- get projects and show modal -----------------------------------------
 
-  const openModalProjectPicker = async (key) => {
+  const openModalProjectPicker = async (key, flag) => {
     setItemKeyForAddingLater(key);
+    setProjectFlag(flag);
 
     await getProjects()
       .then((projects) => {
@@ -335,7 +352,7 @@ export default function SendHoursScreen({ navigation }) {
         setIsProjectModalVisible(true);
       })
       .catch((e) => {
-        console.log(e);
+        console.log("error:", e);
         const { status, data, config } = e.response;
 
         if (status === 401) {
@@ -402,18 +419,41 @@ export default function SendHoursScreen({ navigation }) {
     }
   };
 
-  const saveProjectToRegistration = async (key, projectName, projectNumber) => {
-    let newDataToBeSet = registrationsData[key];
-    newDataToBeSet["project"] = projectNumber;
-    newDataToBeSet["projectName"] = projectName;
+  const saveProjectToRegistration = async (
+    key,
+    projectName,
+    projectNumber,
+    flag
+  ) => {
+    if (flag === "drive") {
+      let newDataToBeSet = driveRegistrationsData[key];
+      newDataToBeSet["projectNumber"] = projectNumber;
+      newDataToBeSet["projectName"] = projectName;
 
-    let alldata = registrationsData;
-    alldata[key] = newDataToBeSet;
+      let alldata = driveRegistrationsData;
+      alldata[key] = newDataToBeSet;
 
-    setRegistrationsData(alldata);
+      setDriveRegistrationsData(alldata);
 
-    if (alldata) {
-      await AsyncStorage.setItem("@registration", JSON.stringify(alldata));
+      if (alldata) {
+        await AsyncStorage.setItem(
+          "@driveRegistration",
+          JSON.stringify(alldata)
+        );
+      }
+    } else {
+      let newDataToBeSet = registrationsData[key];
+      newDataToBeSet["project"] = projectNumber;
+      newDataToBeSet["projectName"] = projectName;
+
+      let alldata = registrationsData;
+      alldata[key] = newDataToBeSet;
+
+      setRegistrationsData(alldata);
+
+      if (alldata) {
+        await AsyncStorage.setItem("@registration", JSON.stringify(alldata));
+      }
     }
   };
 
@@ -541,10 +581,14 @@ export default function SendHoursScreen({ navigation }) {
         <Text
           style={styles.headlineText}
           onPress={() => {
-            // deleteList();
+            deleteList();
             deleteToken();
             deleteEmployee();
             deleteLastActivityAndProject();
+            // saveXAgreementGrantToken(
+            //   "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
+            // );
+
             // console.log(xAgreementGrantToken);
 
             // this is just for testing that I have a deleteList function
@@ -630,7 +674,7 @@ export default function SendHoursScreen({ navigation }) {
                       {!item.projectName && (
                         <TouchableOpacity
                           onPress={() => {
-                            openModalProjectPicker(pos);
+                            openModalProjectPicker(pos, "hourregistration");
                           }}
                         >
                           <Text style={styles.buttonAddActivityOrProject}>
@@ -672,7 +716,7 @@ export default function SendHoursScreen({ navigation }) {
             );
           })}
 
-        <Text>TEST</Text>
+        {/*--------------------------------------------- DRIVING --------------------------------------------- */}
 
         {driveRegistrationsData &&
           driveRegistrationsData.map((item, pos) => {
@@ -683,60 +727,31 @@ export default function SendHoursScreen({ navigation }) {
                 <Text style={styles.itemStyleLargeText}>
                   {formattedDate}
                   {"\n"}
-                  KØRSEL
-                  {/* hours:{" "}
-                  {item.totalHours && item.totalHours} */}
-                  {/* {item.totalHours == 1
-                    ? " (" + item.totalHours + " hour)"
-                    : " (" + item.totalHours + " hours)"} */}
-                  {/* ------------------------ note ------------------------ */}
-                  {/* {item.note && ( // && means if truthy then return text
-                    <Text style={styles.itemStyleSmallText}>
-                      {"\n"}Note: {item.note}
-                    </Text>
-                  )} */}
+                  <Ionicons name="car-outline" size={30}></Ionicons>{" "}
+                  {item.distance} km
                   {/* ------------------------------ if PROJECT exists ----------------------------- */}
-                  {item.projectName && (
+                  {item.projectNumber && (
                     <Text style={styles.itemStyleSmallText}>
-                      {" "}
-                      - {item.projectName}
+                      {"\n"}
+                      {item.projectName}
                     </Text>
                   )}
                 </Text>
 
-                {/* {xAgreementGrantToken&&( */}
-                {/* {(!item.activityName || !item.projectName) && // this is just for removing the first text tag if any of them exists
-                  xAgreementGrantToken && (
-                    <Text>
-                      {!item.activityName && (
-                        <TouchableOpacity
-                          onPress={() => {
-                            openModalActivityPicker(pos);
-                          }}
-                        >
-                          <Text style={styles.buttonAddActivityOrProject}>
-                            Add Activity
-                          </Text>
-                        </TouchableOpacity>
-                      )} */}
-                {/* if not project and XAGREEMENTTOKEN exists */}
-
-                {/* {!item.projectName && (
-                        <TouchableOpacity
-                          onPress={() => {
-                            openModalProjectPicker(pos);
-                          }}
-                        >
-                          <Text style={styles.buttonAddActivityOrProject}>
-                            Add Project
-                          </Text>
-                        </TouchableOpacity>
-                      )}
+                {xAgreementGrantToken && !item.projectNumber && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      openModalProjectPicker(pos, "drive");
+                    }}
+                  >
+                    <Text style={styles.buttonAddActivityOrProject}>
+                      Add Project
                     </Text>
-                  )} */}
+                  </TouchableOpacity>
+                )}
 
                 {/* -----trashcan----- */}
-                {/* <View style={styles.trashCan}>
+                <View style={styles.trashCan}>
                   <TouchableOpacity
                     onPress={() => {
                       Alert.alert(
@@ -749,7 +764,9 @@ export default function SendHoursScreen({ navigation }) {
                           },
                           {
                             text: "Delete",
-                            onPress: () => deleteValue(item),
+                            onPress: () => {
+                              deleteDriveValue(item);
+                            },
                           },
                         ]
                       );
@@ -761,7 +778,7 @@ export default function SendHoursScreen({ navigation }) {
                       color="#112D4E"
                     ></Ionicons>
                   </TouchableOpacity>
-                </View> */}
+                </View>
               </View>
             );
           })}
@@ -801,7 +818,7 @@ export default function SendHoursScreen({ navigation }) {
         }}
       >
         {xAgreementGrantToken ? (
-          <Text style={styles.buttonSendHours}>Send hours to e-conomic</Text>
+          <Text style={styles.buttonSendHours}>Send to e-conomic</Text>
         ) : (
           <Text style={styles.buttonConnectToEconomic}>
             Connect to e-conomic
@@ -855,54 +872,15 @@ export default function SendHoursScreen({ navigation }) {
       >
         <ModalProjectPicker
           itemKeyForAddingLater={itemKeyForAddingLater}
+          projectFlag={projectFlag}
           projects={projectArray}
           isVisible={isActModalVisible}
           setIsModalVisible={setIsProjectModalVisible}
-          setProjectData={(project, key) => {
-            saveProjectToRegistration(key, project.name, project.number);
+          setProjectData={(project, key, flag) => {
+            saveProjectToRegistration(key, project.name, project.number, flag);
           }}
         ></ModalProjectPicker>
       </Modal>
-      {/* 
-      <WebView
-        source={{
-          uri: "https://secure.e-conomic.com/secure/api1/requestaccess.aspx?appPublicToken=I7HMU9jmv6rxT42OViCFYrvD91SrOLkWVNoi3E3BTA01&redirectUrl=https%3A%2F%2Fendpointfortimeitapp.herokuapp.com%2F",
-        }}
-        onLoad={console.log("loaded!")}
-      ></WebView> */}
-
-      {/* token input modal */}
-
-      {/* <Modal
-        style={styles.modal}
-        transparent={true}
-        visible={showTokenInputModal}
-      >
-        <View
-          style={[
-            styles.modal,
-            {
-              top: 40,
-              alignItems: "center",
-              height: 400,
-            },
-          ]}
-        >
-          <TextInput
-            style={styles.input}
-            placeholder="paste ID from e-conomic"
-            onChangeText={(text) => setTokenText(text)}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              saveXAgreementGrantToken(tokenTekst);
-              setShowTokenInputModal(false);
-            }}
-          >
-            <Text style={styles.button}>Submit</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal> */}
 
       {/* positive feedback when sent hours */}
       <Snackbar
