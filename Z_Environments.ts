@@ -1,0 +1,1 @@
+export const googleAPIKey = "AIzaSyClDoOlDSK-iwslR3b4on8RPFc9TT2dHtA"
