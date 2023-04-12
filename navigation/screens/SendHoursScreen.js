@@ -581,13 +581,13 @@ export default function SendHoursScreen({ navigation }) {
         <Text
           style={styles.headlineText}
           onPress={() => {
-            deleteList();
-            deleteToken();
-            deleteEmployee();
-            deleteLastActivityAndProject();
-            // saveXAgreementGrantToken(
-            //   "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
-            // );
+            // deleteList();
+            // deleteToken();
+            // deleteEmployee();
+            // deleteLastActivityAndProject();
+            saveXAgreementGrantToken(
+              "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
+            );
 
             // console.log(xAgreementGrantToken);
 
@@ -730,6 +730,22 @@ export default function SendHoursScreen({ navigation }) {
                   <Ionicons name="car-outline" size={30}></Ionicons>{" "}
                   {item.distance} km
                   {/* ------------------------------ if PROJECT exists ----------------------------- */}
+                  <Text style={styles.itemStyleSmallText}>
+                    {"\n"}
+                    {
+                      item.origin.substring(0, 60)
+                      // +
+                      //   (item.origin.length > 32 ? "..." : "")
+                    }
+                    {"\n"}
+                    {" ->"}
+                    {"\n"}
+                    {
+                      item.destination.substring(0, 60)
+                      //  +
+                      //   (item.destination.length > 33 ? "..." : "")
+                    }
+                  </Text>
                   {item.projectNumber && (
                     <Text style={styles.itemStyleSmallText}>
                       {"\n"}

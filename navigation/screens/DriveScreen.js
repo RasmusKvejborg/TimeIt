@@ -12,17 +12,13 @@ import {
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import {
-  GooglePlaceDetail,
-  GooglePlacesAutocomplete,
-} from "react-native-google-places-autocomplete";
+import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { googleAPIKey } from "../../Z_Environments.ts";
 import MapViewDirections from "react-native-maps-directions";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import decorateMapComponent from "react-native-maps/lib/decorateMapComponent.js";
 
 const { width, height } = Dimensions.get("window");
 const aspectRatio = width / height;
@@ -37,7 +33,10 @@ const initialPosition = {
 
 export default function DriveScreen({ navigation }) {
   const [origin, setOrigin] = React.useState();
+  const [originAddress, setOriginAddress] = React.useState();
   const [destination, setDestination] = React.useState();
+  const [destinationAddress, setDestinationAddress] = React.useState();
+
   const [chooseDistance, setChooseDistance] = React.useState(0);
   const [swittchIsEnabled, setSwittchIsEnabled] = React.useState(false);
   // const [noteText, setNoteText] = React.useState();
@@ -54,6 +53,8 @@ export default function DriveScreen({ navigation }) {
   const [dateText, setDateText] = React.useState();
 
   const mapRef = React.useRef();
+
+  const placesRef = React.useRef();
 
   const moveTo = async (position) => {
     const camera = await mapRef.current.getCamera();
@@ -77,14 +78,13 @@ export default function DriveScreen({ navigation }) {
 
   const onPlaceSelected = (details, flag) => {
     const set = flag === "origin" ? setOrigin : setDestination;
-    console.log(details);
-    console.log(
-      details.address_components[1].long_name +
-        " " +
-        details.address_components[0].long_name +
-        ", " +
-        details.address_components[3].long_name
-    );
+    const setAdd = flag === "origin" ? setOriginAddress : setDestinationAddress;
+
+    let address = placesRef.current?.getAddressText();
+
+    console.log("SATME JA", "flag: ", flag, address);
+
+    setAdd(address);
 
     const position = {
       latitude: details.geometry.location.lat,
@@ -94,7 +94,6 @@ export default function DriveScreen({ navigation }) {
       // only move if its not using zoomTwoPositions. Same if I want to make a zoom here.
       moveTo(position);
     }
-
     set(position);
   };
 
@@ -188,33 +187,44 @@ export default function DriveScreen({ navigation }) {
   };
 
   const saveFunction = async (registration) => {
-    console.log("registration: ", registration);
+    let registrationRoundTrip;
+
+    if (swittchIsEnabled) {
+      registrationRoundTrip = {
+        dateTime: registration.dateTime,
+        distance: registration.distance,
+        projectNumber: registration.projectNumber,
+        projectName: registration.projectName,
+        origin: registration.destination,
+        destination: registration.origin,
+      };
+    }
+
     try {
       let prevItems = await AsyncStorage.getItem("@driveRegistration");
+      let newItems = [];
 
       if (prevItems !== null) {
         newItems = JSON.parse(prevItems);
         newItems.push(registration);
-
-        newItems.sort((a, b) =>
-          a.date == b.date
-            ? a.startTime < b.startTime
-              ? 1
-              : -1
-            : a.date < b.date
-            ? 1
-            : -1
-        ); // sorts the list datewise
       } else {
         newItems = [registration];
       }
+
+      if (registrationRoundTrip) {
+        console.log("it is enabled");
+        newItems.push(registrationRoundTrip);
+      }
+
+      newItems.sort((a, b) => (a.dateTime < b.dateTime ? 1 : -1)); // sorts the list datewise
+
       const value = await AsyncStorage.setItem(
         "@driveRegistration",
         JSON.stringify(newItems)
       );
       // onToggleSnackBar()
     } catch (error) {
-      Alert.alert("Something went wrong", "error code 428"); // muligvis fordi newItems aldrig har et "let" foran
+      Alert.alert("Something went wrong", "error code 428");
       console.log("eRrOr MsG: ", error);
     }
   };
@@ -290,8 +300,8 @@ export default function DriveScreen({ navigation }) {
           styles={{ textInput: styles.driveScreenSearchInput }}
           placeholder="From"
           fetchDetails
+          ref={placesRef}
           onPress={(data, details = null) => {
-            console.log("data:: ", data);
             onPlaceSelected(details, "origin");
           }}
           query={{
@@ -304,6 +314,7 @@ export default function DriveScreen({ navigation }) {
           styles={{ textInput: styles.driveScreenSearchInput }}
           placeholder="Destination"
           fetchDetails
+          ref={placesRef}
           onPress={async (data, details = null) => {
             onPlaceSelected(details, "destination");
           }}
@@ -401,8 +412,8 @@ export default function DriveScreen({ navigation }) {
               distance: chooseDistance,
               projectNumber: projectNumber,
               projectName: projectText,
-              from: origin,
-              destination: destination,
+              origin: originAddress,
+              destination: destinationAddress,
             };
 
             // deleteList();

@@ -165,6 +165,7 @@ export default function HomeScreen({ navigation }) {
     console.log("regi", registration);
     try {
       let prevItems = await AsyncStorage.getItem("@registration");
+      let newItems = [];
 
       if (prevItems !== null) {
         newItems = JSON.parse(prevItems);
