@@ -96,7 +96,7 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     alignSelf: "center",
     backgroundColor: "#112D4E",
-    color: "#F9F7F7",
+    color: "#F9F7F7", //almost white
   },
 
   buttonSendHours: {

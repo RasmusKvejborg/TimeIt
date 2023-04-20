@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
-  Alert,
 } from "react-native";
 
 const WIDTH = Dimensions.get("window").width;

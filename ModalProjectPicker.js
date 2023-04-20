@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
-  View,
 } from "react-native";
 
 const HEIGHT = Dimensions.get("window").height;

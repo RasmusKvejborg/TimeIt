@@ -2,7 +2,6 @@ import React from "react";
 import { styles } from "./GlobalStyles.js";
 import {
   Text,
-  View,
   TouchableOpacity,
   ScrollView,
   Dimensions,
@@ -112,7 +111,7 @@ const ModalTimePicker = (props) => {
           // set initial scroll position to 25% of the content height
           scrollFarDown === "endTime"
             ? { y: HEIGHT * 0.8 }
-            : { y: HEIGHT * 0.57 }
+            : { y: HEIGHT * 0.5 } // var 57 så tror 50 er passende
         }
       >
         {option}
