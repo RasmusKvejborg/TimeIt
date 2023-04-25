@@ -19,12 +19,14 @@ import { ModalProjectPicker } from "../../ModalProjectPicker.js";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { Snackbar } from "react-native-paper";
+import { add } from "date-fns";
 
 const { width, height } = Dimensions.get("window");
 const aspectRatio = width / height;
 const latitudeDelta = 4.2; // zoomed out
 const longitudeDelta = latitudeDelta * aspectRatio;
-const initialPosition = {
+const middleOfDenmark = {
   latitude: 56.7, // middle of Denmark
   longitude: 10.5039,
   latitudeDelta: latitudeDelta,
@@ -41,6 +43,13 @@ export default function DriveScreen({ navigation }) {
   const [swittchIsEnabled, setSwittchIsEnabled] = React.useState(false);
   // const [noteText, setNoteText] = React.useState();
   const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
+  // -------------------- consts for snackBar -------------------------------
+  const [snackBarVisible, setSnackBarVisible] = React.useState(false);
+
+  const onToggleSnackBar = () => setSnackBarVisible(!snackBarVisible);
+
+  const onDismissSnackBar = () => setSnackBarVisible(false);
+
   // ------------------------ project picker modal -----------------
   const [projectArray, setProjectArray] = React.useState([]);
   const [projectNumber, SetProjectNumber] = React.useState();
@@ -50,7 +59,7 @@ export default function DriveScreen({ navigation }) {
   // --------------------------date picker modal--------------------
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [show, setShow] = React.useState(false);
-  const [dateText, setDateText] = React.useState();
+  const [dateText, setDateText] = React.useState(getDateText(new Date()));
 
   const mapRef = React.useRef();
 
@@ -76,20 +85,76 @@ export default function DriveScreen({ navigation }) {
     mapRef.current.fitToCoordinates([origin, destination], { edgePadding });
   };
 
-  const onPlaceSelected = (details, flag) => {
+  // ------------------------------------
+
+  const workPlace = {
+    description: "Work",
+    geometry: { location: { lat: 49.8496818, lng: 3.2940881 } },
+  };
+
+  const [searchHistoryList, setSearchHistoryList] = React.useState([]);
+  // -------------------------------------
+
+  const onPlaceSelected = (data, details, flag) => {
     const set = flag === "origin" ? setOrigin : setDestination;
     const setAdd = flag === "origin" ? setOriginAddress : setDestinationAddress;
 
-    let address = placesRef.current?.getAddressText();
-
-    console.log("SATME JA", "flag: ", flag, address);
-
+    let address; // hvis jeg kan finde en måde hvorpå den ikke bliver kaldt
+    if (placesRef.current.getAddressText()) {
+      address = placesRef.current?.getAddressText();
+    } else {
+      address = data.description;
+    }
     setAdd(address);
 
-    const position = {
-      latitude: details.geometry.location.lat,
-      longitude: details.geometry.location.lng,
+    // console.log("address: ", address);
+
+    let latitude = null;
+    let longitude = null;
+
+    if (details.geometry?.location) {
+      latitude = details.geometry.location.lat;
+      longitude = details.geometry.location.lng;
+    }
+
+    const position = { latitude, longitude };
+
+    // ------- this is for the searchhistory
+    let newObject = {
+      description: address,
+      geometry: {
+        location: { lat: position.latitude, lng: position.longitude },
+      },
     };
+
+    let index = searchHistoryList.findIndex((item) => {
+      return item.description === newObject.description; // if not already in the list, it returns -1
+    });
+
+    let tempSearchHistoryList = searchHistoryList;
+
+    if (index !== -1) {
+      // if object already there
+      // smide objectet øverst i listen.
+      const objectToMove = tempSearchHistoryList[index]; // save the object to be moved
+      tempSearchHistoryList.splice(index, 1); // remove the object from position i
+      tempSearchHistoryList.splice(0, 0, objectToMove); // insert the object at position j
+    } else {
+      console.log("lengt: ", tempSearchHistoryList.length);
+      if (tempSearchHistoryList.length >= 5) {
+        console.log("popped");
+        tempSearchHistoryList.pop();
+      }
+      tempSearchHistoryList = [newObject, ...tempSearchHistoryList];
+    }
+
+    setSearchHistoryList(tempSearchHistoryList);
+    console.log("s ", tempSearchHistoryList);
+
+    saveLastSearchHistory(tempSearchHistoryList);
+
+    // -------------
+
     if (!origin && !destination) {
       // only move if its not using zoomTwoPositions. Same if I want to make a zoom here.
       moveTo(position);
@@ -107,6 +172,7 @@ export default function DriveScreen({ navigation }) {
     setSwittchIsEnabled((previousState) => !previousState);
     if (swittchIsEnabled) {
       console.log("button turned off");
+      console.log("selected onOFF date is", selectedDate);
     } else {
       console.log("button turned on");
     }
@@ -186,6 +252,16 @@ export default function DriveScreen({ navigation }) {
     }
   };
 
+  const saveLastSearchHistory = async (searchHis) => {
+    if (searchHis) {
+      console.log("searchhis", searchHis);
+      await AsyncStorage.setItem(
+        "@lastSearchHistory",
+        JSON.stringify(searchHis)
+      );
+    }
+  };
+
   const saveFunction = async (registration) => {
     let registrationRoundTrip;
 
@@ -212,7 +288,6 @@ export default function DriveScreen({ navigation }) {
       }
 
       if (registrationRoundTrip) {
-        console.log("it is enabled");
         newItems.push(registrationRoundTrip);
       }
 
@@ -240,6 +315,11 @@ export default function DriveScreen({ navigation }) {
     }
   }, [origin, destination]);
 
+  // React.useEffect(() => {
+  //   saveLastSearchHistory(searchHistoryList);
+  //   console.log("aysays");
+  // }, [searchHistoryList]);
+
   React.useEffect(() => {
     const setXAppSecretTokenImmediately = async () => {
       if (!xAgreementGrantToken)
@@ -259,10 +339,22 @@ export default function DriveScreen({ navigation }) {
       }
     };
 
+    const setSavedSearchHistoryListImmediately = async () => {
+      const lastSearchHistory = JSON.parse(
+        await AsyncStorage.getItem("@lastSearchHistory")
+      );
+
+      if (lastSearchHistory) {
+        setSearchHistoryList(lastSearchHistory);
+      }
+    };
+
     let listener = navigation.addListener("focus", () => {
       setXAppSecretTokenImmediately();
-      setDateText(getDateText(selectedDate));
+      // setDateText(getDateText(selectedDate));
+      // console.log("selected date is", selectedDate);
       setSavedProjectImmediately();
+      setSavedSearchHistoryListImmediately();
     });
 
     return () => {
@@ -278,7 +370,7 @@ export default function DriveScreen({ navigation }) {
         ref={mapRef}
         style={styles.map}
         provider={PROVIDER_GOOGLE}
-        initialRegion={initialPosition}
+        initialRegion={middleOfDenmark}
       >
         {origin && <Marker coordinate={origin} />}
         {destination && <Marker coordinate={destination} />}
@@ -297,30 +389,42 @@ export default function DriveScreen({ navigation }) {
       <View style={styles.driveScreenSearchContainer}>
         {/*------- origin inputfield -------*/}
         <GooglePlacesAutocomplete
+          predefinedPlaces={searchHistoryList}
           styles={{ textInput: styles.driveScreenSearchInput }}
           placeholder="From"
           fetchDetails
+          GooglePlacesSearchQuery={{
+            rankby: "distance",
+          }}
           ref={placesRef}
           onPress={(data, details = null) => {
-            onPlaceSelected(details, "origin");
+            onPlaceSelected(data, details, "origin");
           }}
           query={{
             key: googleAPIKey,
             language: "en",
+            radius: 100000, // in meters
+            location: `${middleOfDenmark.latitude},${middleOfDenmark.longitude}`,
           }}
         />
         {/*------- destination inputfield -------*/}
         <GooglePlacesAutocomplete
+          predefinedPlaces={searchHistoryList}
           styles={{ textInput: styles.driveScreenSearchInput }}
           placeholder="Destination"
           fetchDetails
+          GooglePlacesSearchQuery={{
+            rankby: "distance",
+          }}
           ref={placesRef}
-          onPress={async (data, details = null) => {
-            onPlaceSelected(details, "destination");
+          onPress={(data, details = null) => {
+            onPlaceSelected(data, details, "destination");
           }}
           query={{
             key: googleAPIKey,
             language: "en",
+            radius: 100000, // in meters
+            location: `${middleOfDenmark.latitude},${middleOfDenmark.longitude}`,
           }}
         />
         {/*------- distance inputfield -------*/}
@@ -330,7 +434,9 @@ export default function DriveScreen({ navigation }) {
             { flexDirection: "row", alignItems: "center" },
           ]}
         >
-          <Text>Distance (km): </Text>
+          <Text>
+            {swittchIsEnabled ? "Distance (km):  2x" : "Distance (km): "}
+          </Text>
           <TextInput
             style={{ width: 80, fontSize: 16 }}
             defaultValue={String(chooseDistance)}
@@ -390,6 +496,8 @@ export default function DriveScreen({ navigation }) {
             mode={"date"}
             is24Hour={true}
             display={Platform.OS === "ios" ? "inline" : "default"}
+            color
+            backgroundColor={"#F9F7F7"}
             onChange={(event, selectedDate) => {
               setShow(false);
               const chosenDate = selectedDate;
@@ -404,6 +512,7 @@ export default function DriveScreen({ navigation }) {
         {/* ----------- save button ---------- */}
 
         <TouchableOpacity // submit button
+          delayPressOut={5000}
           onPress={() => {
             Keyboard.dismiss();
 
@@ -425,6 +534,7 @@ export default function DriveScreen({ navigation }) {
               Alert.alert("Km cannot be less than one");
             } else {
               saveFunction(registration);
+              onToggleSnackBar();
             }
           }}
         >
@@ -450,6 +560,15 @@ export default function DriveScreen({ navigation }) {
           }}
         ></ModalProjectPicker>
       </Modal>
+      <Snackbar
+        style={styles.snackBar}
+        visible={snackBarVisible}
+        duration={700}
+        onDismiss={onDismissSnackBar}
+        action={{ label: "Close" }}
+      >
+        Registration saved.
+      </Snackbar>
     </View>
   );
 }

@@ -337,16 +337,23 @@ export default function HomeScreen({ navigation }) {
 
     let listener = navigation.addListener("focus", () => {
       setXAppSecretTokenImmediately();
-      setDateText(getDateText(selectedDate)); //this one is also to make sure datetext(today) doesnt say (today) if app has been running in SendhoursScreen past midnight, then it should update when going back to homescreen
     });
 
     return () => {
       if (listener) {
         listener.remove();
       }
-      // subscription.remove();
     };
   }, []);
+
+  // ----------------
+  React.useEffect(() => {
+    let listener2 = navigation.addListener("focus", () => {
+      setDateText(getDateText(selectedDate)); //this one is also to make sure datetext(today) doesnt say (today) if app has been running in SendhoursScreen past midnight, then it should update when going back to homescreen
+    });
+
+    return listener2;
+  }, [selectedDate]);
 
   // ------------------this useeffect is to update the dateText (today) if has been running in background past midnigt, then it shouldnt still say today---------------------------
   React.useEffect(() => {
@@ -380,7 +387,6 @@ export default function HomeScreen({ navigation }) {
         onKeyboardDidShow={() => {
           setTimeout(() => {
             this.scrollView.scrollToEnd();
-            console.log("heklo");
           }, 10);
         }}
         keyboardShouldPersistTaps="handled"
@@ -398,7 +404,7 @@ export default function HomeScreen({ navigation }) {
           {/* <TouchableOpacity
             onPress={() => console.log("handleapb", selectedDate.getDate())}
           > */}
-          <Text style={styles.headlineText}>Register your hours.</Text>
+          <Text style={styles.headlineText}>Register your hours</Text>
           {/* </TouchableOpacity> */}
 
           <StatusBar style="auto" />

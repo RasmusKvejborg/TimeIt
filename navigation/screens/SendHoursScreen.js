@@ -140,6 +140,15 @@ export default function SendHoursScreen({ navigation }) {
     }
   };
 
+  const deleteDriveList = async () => {
+    try {
+      console.log("drive list deleted from asyncstorage");
+      await AsyncStorage.removeItem("@driveRegistration");
+    } catch (err) {
+      console.log("error in drive deletion: ", err);
+    }
+  };
+
   // ------------------- get employee-----------------------------------------
 
   const showEmployeeSelection = () => {
@@ -166,25 +175,108 @@ export default function SendHoursScreen({ navigation }) {
       });
   };
 
-  // ------------------post all time entries-------------------------------------------
-  const postAllTimeEntries = () => {
+  // ------------------post registrations-------------------------------------------
+  postToFirebase = () => {
+    console.log(
+      "xAgreementGrantToken: ",
+      xAgreementGrantToken,
+      "employeeNo: ",
+      employeeNo
+    );
+  };
+
+  const postAllDriveEntries = async () => {
+    if (driveRegistrationsData.length <= 0) {
+      console.log("NO DRIVE REGISTRATIONS (and thats ok)");
+      return;
+    }
+    const DriveProjectNumberMissing = driveRegistrationsData.some(
+      (val) => !val.projectNumber
+    );
+
+    if (DriveProjectNumberMissing) {
+      Alert.alert(
+        "Project missing",
+        "Add a Project to all your Drive registrations. \n\nYou may have to scroll down to see it."
+      );
+      return;
+    }
+
+    const drivePromises = [];
+
+    driveRegistrationsData.forEach((val) => {
+      drivePromises.push(
+        postMilageEntry(
+          val.dateTime,
+          val.distance,
+          val.projectNumber,
+          val.origin,
+          val.destination
+        )
+      );
+    });
+    try {
+      await Promise.all(drivePromises);
+      setDriveRegistrationsData([]);
+      deleteDriveList();
+      onToggleHoursSentSnackBar();
+    } catch (e) {
+      console.log("error...", e);
+      Alert.alert(
+        "Something went wrong. Error 105",
+        "Try again later or contact support"
+      );
+    }
+  };
+
+  // -------------------------------- post milage entry ---------------------------------------------
+
+  const postMilageEntry = async (
+    date,
+    distance,
+    project,
+    origin,
+    destination
+  ) => {
+    let milageEnt = {
+      // date: JSON.parse(date), // this has to be parsed because it is stringified twice by mistake in HomeScreen. format: "2023-02-18T15:23:01Z"
+      date: JSON.parse(date),
+      distance: distance,
+      employeeNumber: employeeNo,
+      projectNumber: project,
+      from: origin,
+      to: destination,
+    };
+    try {
+      const res = await axios.post(
+        "https://apis.e-conomic.com/api/v17.0.2/mileages",
+        milageEnt,
+        config
+      );
+
+      return res;
+    } catch (e) {
+      // Alert.alert("Something went wrong. Error 107");
+      console.log("error....", e);
+      throw e; // re-throw the error so that it can be caught by the Promise.all() call
+    }
+  };
+
+  //------------------post all time entries-------------------------------------------
+  const postAllTimeEntries = async () => {
     // data.forEach((val) => {
     //   postTimeEntry(val.note, val.date);
     // });
     // below is a complex version of the above
 
-    if (registrationsData && registrationsData.length > 0) {
+    if (registrationsData.length > 0) {
       const promises = [];
 
       const activityNumberMissing = registrationsData.some(
         (val) => !val.activity || !val.project
       );
 
-      const DriveProjectNumberMissing = driveRegistrationsData.some(
-        (val) => !val.projectNumber
-      );
-
-      if (activityNumberMissing || DriveProjectNumberMissing) {
+      if (activityNumberMissing) {
         Alert.alert(
           "Activity or Project missing",
           "Add Activity and Project to all your registrations. \n\nYou may have to scroll down to see it."
@@ -203,32 +295,32 @@ export default function SendHoursScreen({ navigation }) {
             )
           ); // calls the postTimeEntry() for each entry
         });
-        Promise.all(promises)
-          .then((result) => {
-            //  if success, then save oldData, but delete all registrations:
-            setOldData(registrationsData);
-            setRegistrationsData();
-            deleteList();
-            onToggleHoursSentSnackBar();
-          })
-          .catch((e) => {
-            console.log("error..", e);
-            const { status, data, config } = e.response;
+        try {
+          await Promise.all(promises);
+          //  if success, then save oldData, but delete all registrations:
+          setOldData(registrationsData); // not saving any old drive registrations at the moment
+          setRegistrationsData([]);
+          deleteList();
+          onToggleHoursSentSnackBar();
+        } catch (e) {
+          console.log("error..", e);
+          const { status, data, config } = e.response;
 
-            if (status === 401) {
-              Alert.alert(
-                "401 error",
-                "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
-              );
-            } else {
-              Alert.alert(
-                "Something went wrong. Error 104",
-                "Try again later or contact support"
-              );
-            }
-          });
+          if (status === 401) {
+            Alert.alert(
+              "401 error",
+              "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong."
+            );
+          } else {
+            Alert.alert(
+              "Something went wrong. Error 104",
+              "Try again later or contact support"
+            );
+          }
+        }
       }
-    } else {
+    } else if (driveRegistrationsData.length <= 0) {
+      // this triggers if there are no Drive data AND not Time registrations.
       Alert.alert("No registrations");
     }
   };
@@ -252,13 +344,18 @@ export default function SendHoursScreen({ navigation }) {
       text: note && note,
     };
 
-    const res = await axios.post(
-      "https://apis.e-conomic.com/api/v16.2.2/timeentries",
-      timeEnt,
-      config
-    );
+    try {
+      const res = await axios.post(
+        "https://apis.e-conomic.com/api/v16.2.2/timeentries",
+        timeEnt,
+        config
+      );
 
-    return res;
+      return res;
+    } catch (e) {
+      console.log("error....", e);
+      throw e; // re-throw the error so that it can be caught by the Promise.all() call
+    }
   };
 
   //-------------------------------- end post timeentry end ---------------------------------------------
@@ -585,13 +682,16 @@ export default function SendHoursScreen({ navigation }) {
             // deleteToken();
             // deleteEmployee();
             // deleteLastActivityAndProject();
-            saveXAgreementGrantToken(
-              "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
-            );
 
+            // saveXAgreementGrantToken(
+            //   "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
+            // );
+            // postMilageEntry();
+
+            // console.log(driveRegistrationsData);
             // console.log(xAgreementGrantToken);
 
-            // this is just for testing that I have a deleteList function
+            postToFirebase();
           }}
         >
           Send your hours to e-conomic
@@ -803,7 +903,9 @@ export default function SendHoursScreen({ navigation }) {
       <TouchableOpacity
         onPress={() => {
           if (xAgreementGrantToken) {
-            employeeNo ? postAllTimeEntries() : showEmployeeSelection();
+            employeeNo
+              ? (postAllTimeEntries(), postAllDriveEntries())
+              : showEmployeeSelection();
           } else {
             Alert.alert(
               "Connect to e-conomic",
