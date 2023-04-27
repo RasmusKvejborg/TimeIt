@@ -21,8 +21,14 @@ const ModalActivityPicker = (props) => {
     }
   };
 
-  const flexActivities = [];
+  const flexActivities = [
+    { name: "Ferie", number: "1", key: 1 },
+    { name: "Sygedag", number: "2", key: 2 },
+    { name: "Optjent Flextid", number: "3", key: 3 },
+    { name: "Anvendt flextid", number: "4", key: 4 },
+  ];
 
+  console.log("a ", activities);
   // ----------------------------------
 
   const activityOptions = activities.map((activity) => {
@@ -41,20 +47,25 @@ const ModalActivityPicker = (props) => {
     );
   });
 
-  // const flexOptions = activities.map((activity) => {
-  //   return (
-  //     <TouchableOpacity
-  //       key={activity.number}
-  //       onPress={() => {
-  //         onPressItem(activity); // this gets sent to props
-  //       }}
-  //     >
-  //       <Text style={styles.ActivityAndProjectPickerTextInside}>
-  //         {activity.name}
-  //       </Text>
-  //     </TouchableOpacity>
-  //   );
-  // });
+  const flexOptions = flexActivities.map((flexactivity) => {
+    return (
+      <TouchableOpacity
+        key={flexactivity.key}
+        onPress={() => {
+          onPressItem(flexactivity); // this gets sent to props
+        }}
+      >
+        <Text
+          style={[
+            styles.ActivityAndProjectPickerTextInside,
+            { backgroundColor: "#BCC8DB" },
+          ]}
+        >
+          {flexactivity.name}
+        </Text>
+      </TouchableOpacity>
+    );
+  });
 
   return (
     <SafeAreaView
@@ -88,22 +99,7 @@ const ModalActivityPicker = (props) => {
 
       <ScrollView>
         {activityOptions}
-        {/* ----------- flex --------------*/}
-        <TouchableOpacity
-          onPress={() => {
-            // onPressItem(activity); // this gets sent to prop
-            console.log("hej");
-          }}
-        >
-          <Text
-            style={[
-              styles.ActivityAndProjectPickerTextInside,
-              { backgroundColor: "#BCC8DB" },
-            ]}
-          >
-            Hejmeddig
-          </Text>
-        </TouchableOpacity>
+        {flexOptions}
       </ScrollView>
     </SafeAreaView>
   );

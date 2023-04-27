@@ -17,10 +17,13 @@ import { Snackbar } from "react-native-paper";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import axios, { all } from "axios";
 import { ModalEmployeePicker } from "../../ModalEmployeePicker.js";
+import { ModalSettings } from "../../ModalSettings.js";
+
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
 import { getISOWeek } from "date-fns";
 import * as WebBrowser from "expo-web-browser";
+import { postFirebase, getDataFromFirestore } from "../../PostToFireBase.js";
 
 export default function SendHoursScreen({ navigation }) {
   const [registrationsData, setRegistrationsData] = React.useState([]);
@@ -42,21 +45,30 @@ export default function SendHoursScreen({ navigation }) {
 
   // ------------------------ employeee picker modal -----------------
   const [emplArray, setEmplArray] = React.useState([]);
-  const [employeeNo, SetemployeeNo] = React.useState();
+  const [employeeNo, setEmployeeNo] = React.useState();
+  const [employeeName, setEmployeeName] = React.useState();
+
   const [isEmployeeModalVisible, setIsEmployeeModalVisible] =
     React.useState(false);
 
-  const saveEmployee = async (number) => {
-    if (number) {
-      SetemployeeNo(number);
-      await AsyncStorage.setItem("@Employee", JSON.stringify(number));
+  const [isSettingsModalVisible, setIsSettingsModalVisible] =
+    React.useState(false);
+
+  const saveEmployee = async (number, name) => {
+    if (number && name) {
+      setEmployeeNo(number);
+      setEmployeeName(name);
+
+      console.log(number, name);
+      const employee = { number: number, name: name };
+      await AsyncStorage.setItem("@Employee", JSON.stringify(employee));
     }
   };
 
   const deleteEmployee = async () => {
     try {
       await AsyncStorage.removeItem("@Employee");
-      SetemployeeNo();
+      setEmployeeNo();
       console.log("Employee deleted from asyncstorage AND employeeNo");
     } catch (err) {
       console.log("error in deletion of employee: ", err);
@@ -176,18 +188,9 @@ export default function SendHoursScreen({ navigation }) {
   };
 
   // ------------------post registrations-------------------------------------------
-  postToFirebase = () => {
-    console.log(
-      "xAgreementGrantToken: ",
-      xAgreementGrantToken,
-      "employeeNo: ",
-      employeeNo
-    );
-  };
 
   const postAllDriveEntries = async () => {
     if (driveRegistrationsData.length <= 0) {
-      console.log("NO DRIVE REGISTRATIONS (and thats ok)");
       return;
     }
     const DriveProjectNumberMissing = driveRegistrationsData.some(
@@ -283,17 +286,37 @@ export default function SendHoursScreen({ navigation }) {
         );
       } else {
         registrationsData.forEach((val) => {
-          promises.push(
-            postTimeEntry(
-              val.date,
-              val.startTime,
-              val.endTime,
-              val.totalHours,
+          if (typeof val.activity === "string") {
+            // if its not a number, then it is flexhours (the only way I could to that easily at the time)
+            // her skal den der post to firebase komme.
+            console.log("looooll");
+
+            postFirebase(
               val.activity,
+              val.activityName,
+              val.date,
+              val.note,
               val.project,
-              val.note
-            )
-          ); // calls the postTimeEntry() for each entry
+              val.projectName,
+              val.totalHours,
+              xAgreementGrantToken,
+              employeeName,
+              employeeNo
+            );
+          } // kan fjerne ovenstående og lave en feriedag registrering hvis jeg gerne vil have en måde at lave det der sletning igen
+          else {
+            promises.push(
+              postTimeEntry(
+                val.date,
+                val.startTime,
+                val.endTime,
+                val.totalHours,
+                val.activity,
+                val.project,
+                val.note
+              )
+            );
+          } // calls the postTimeEntry() for each entry
         });
         try {
           await Promise.all(promises);
@@ -312,10 +335,7 @@ export default function SendHoursScreen({ navigation }) {
               "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong."
             );
           } else {
-            Alert.alert(
-              "Something went wrong. Error 104",
-              "Try again later or contact support"
-            );
+            Alert.alert("Something went wrong. Error 104", "contact support");
           }
         }
       }
@@ -597,7 +617,11 @@ export default function SendHoursScreen({ navigation }) {
     setXAppSecretTokenImmediately();
     // -- getting employee from storage:
     const setSavedEmployeeImmediately = async () => {
-      SetemployeeNo(await AsyncStorage.getItem("@Employee"));
+      const employeeData = JSON.parse(await AsyncStorage.getItem("@Employee"));
+      if (employeeData) {
+        setEmployeeNo(employeeData.number);
+        setEmployeeName(employeeData.name);
+      }
     };
     setSavedEmployeeImmediately();
     // --
@@ -675,42 +699,52 @@ export default function SendHoursScreen({ navigation }) {
   return (
     <View style={styles.sendHoursContainer}>
       <ScrollView>
+        <TouchableOpacity
+          onPress={() => {
+            console.log("åbnet");
+            setIsSettingsModalVisible(true);
+          }}
+        >
+          <Ionicons
+            style={styles.topRightIcon}
+            name="settings"
+            size={32}
+          ></Ionicons>
+        </TouchableOpacity>
+
         <Text
-          style={styles.headlineText}
+          style={[styles.headlineText, { marginTop: 15 }]}
           onPress={() => {
             // deleteList();
             // deleteToken();
+            // console.log(employeeName, employeeNo);
             // deleteEmployee();
             // deleteLastActivityAndProject();
-
             // saveXAgreementGrantToken(
             //   "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
             // );
             // postMilageEntry();
-
             // console.log(driveRegistrationsData);
             // console.log(xAgreementGrantToken);
-
-            postToFirebase();
+            // console.log(registrationsData);
+            // getDataFromFirestore();
+            // postFirebase(
+            //            "1",
+            //   "sygedag",
+            //   "\"2023-04-26T16:44:15.722Z\"",
+            //   "note",
+            //   "Projectnumber",
+            //   "projectname",
+            //   "totalhours",
+            //   xAgreementGrantToken,
+            //   employeeName,
+            //   employeeNo
+            // );
           }}
         >
-          Send your hours to e-conomic
+          Send your hours
         </Text>
-        {xAgreementGrantToken && (
-          <TouchableOpacity
-            onPress={() => {
-              Clipboard.setString(
-                `https://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
-              );
-              Alert.alert(
-                "Share e-conomic connection",
-                `1. Ask employee to download this app. \n \n2. Send this link to employee's phone (link copied to clipboard). \n \nhttps://endpointfortimeitapp.herokuapp.com/?token=${xAgreementGrantToken}`
-              );
-            }}
-          >
-            <Text style={{ marginLeft: 10 }}>Share</Text>
-          </TouchableOpacity>
-        )}
+
         {/* sendhourscontainer, itemstyle, itemstylelargetext */}
         {registrationsData &&
           registrationsData.map((item, pos) => {
@@ -945,6 +979,23 @@ export default function SendHoursScreen({ navigation }) {
       </TouchableOpacity>
 
       {/* -------------------below is invisible things like modals and popups -------------------*/}
+      {/* settings modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isSettingsModalVisible}
+        nRequestClose={() => setIsSettingsModalVisible(false)}
+      >
+        <ModalSettings
+          xAgreementGrantToken={xAgreementGrantToken}
+          employeeNo={employeeNo}
+          isVisible={isSettingsModalVisible}
+          setIsModalVisible={setIsSettingsModalVisible}
+          // setEmployeeData={(number, name) => {
+          //   saveEmployee(number, name);
+          // }}
+        ></ModalSettings>
+      </Modal>
       {/* employee picker modal */}
       <Modal
         transparent={true}
@@ -956,8 +1007,8 @@ export default function SendHoursScreen({ navigation }) {
           employees={emplArray}
           isVisible={isEmployeeModalVisible}
           setIsModalVisible={setIsEmployeeModalVisible}
-          setEmployeeData={(number) => {
-            saveEmployee(number);
+          setEmployeeData={(number, name) => {
+            saveEmployee(number, name);
           }}
         ></ModalEmployeePicker>
       </Modal>

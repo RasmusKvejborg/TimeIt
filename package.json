@@ -1,6 +1,6 @@
 {
   "name": "timeit",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "scripts": {
     "start": "expo start --dev-client",
     "android": "expo run:android",
@@ -22,6 +22,7 @@
     "expo-status-bar": "~1.4.2",
     "expo-updates": "~0.15.6",
     "expo-web-browser": "~12.0.0",
+    "firebase": "^9.20.0",
     "http": "^0.0.1-security",
     "pod-install": "^0.1.38",
     "querystring": "^0.2.1",

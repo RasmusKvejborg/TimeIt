@@ -1,7 +1,11 @@
+import { da } from "date-fns/locale";
 import { StyleSheet, Dimensions } from "react-native";
 
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
+
+const lightblue = "#DBE2EF";
+const darkblue = "#112D4E";
 
 export const styles = StyleSheet.create({
   container: {
@@ -21,7 +25,7 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 10,
     paddingHorizontal: 19,
-    backgroundColor: "#DBE2EF",
+    backgroundColor: lightblue,
     borderRadius: 15,
     overflow: "hidden",
     width: WIDTH - 20,
@@ -32,7 +36,7 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 10,
     paddingHorizontal: 19,
-    backgroundColor: "#DBE2EF",
+    backgroundColor: lightblue,
     borderRadius: 15,
     overflow: "hidden",
     width: WIDTH - 20,
@@ -56,10 +60,10 @@ export const styles = StyleSheet.create({
     width: 300,
     fontSize: 24,
     marginBottom: 20,
-    backgroundColor: "#DBE2EF",
+    backgroundColor: lightblue,
     borderRadius: 15,
     overflow: "hidden",
-    color: "#112D4E",
+    color: darkblue,
   },
   noteInput: {
     padding: 8,
@@ -67,10 +71,10 @@ export const styles = StyleSheet.create({
     width: 300,
     fontSize: 24,
     marginBottom: 20,
-    backgroundColor: "#DBE2EF",
+    backgroundColor: lightblue,
     borderRadius: 15,
     overflow: "hidden",
-    color: "#112D4E",
+    color: darkblue,
     minHeight: 100,
     textAlignVertical: "top",
   },
@@ -82,7 +86,7 @@ export const styles = StyleSheet.create({
     padding: 8,
     width: 300,
     textAlign: "center",
-    backgroundColor: "#112D4E",
+    backgroundColor: darkblue,
     color: "#F9F7F7",
   },
   driveButton: {
@@ -95,7 +99,7 @@ export const styles = StyleSheet.create({
     // width: 80,
     textAlign: "center",
     alignSelf: "center",
-    backgroundColor: "#112D4E",
+    backgroundColor: darkblue,
     color: "#F9F7F7", //almost white
   },
 
@@ -108,7 +112,7 @@ export const styles = StyleSheet.create({
     borderRadius: 15,
     overflow: "hidden",
     paddingVertical: 8,
-    backgroundColor: "#112D4E",
+    backgroundColor: darkblue,
     color: "#F9F7F7",
   },
   buttonAddActivityOrProject: {
@@ -116,12 +120,12 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 3,
-    borderColor: "#112D4E",
+    borderColor: darkblue,
     paddingHorizontal: 7,
     marginHorizontal: 5,
     textAlign: "center",
     backgroundColor: "#F9F7F7",
-    color: "#112D4E",
+    color: darkblue,
   },
   buttonConnectToEconomic: {
     width: WIDTH - 20,
@@ -133,9 +137,9 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
     paddingVertical: 8,
     borderWidth: 3,
-    borderColor: "#112D4E",
+    borderColor: darkblue,
     backgroundColor: "#F9F7F7",
-    color: "#112D4E",
+    color: darkblue,
   },
   modal: {
     backgroundColor: "#F9F7F7",
@@ -154,8 +158,8 @@ export const styles = StyleSheet.create({
     marginHorizontal: 5,
     marginVertical: 7,
     fontSize: 22,
-    color: "#112D4E",
-    backgroundColor: "#DBE2EF",
+    color: darkblue,
+    backgroundColor: lightblue,
     // backgroundColor: "blue",
   },
   ActivityAndProjectPickerTextInside: {
@@ -166,8 +170,8 @@ export const styles = StyleSheet.create({
     marginHorizontal: 5,
     marginVertical: 7,
     fontSize: 22,
-    color: "#112D4E", // dark blue
-    backgroundColor: "#DBE2EF", // light blue
+    color: darkblue, // dark blue
+    backgroundColor: lightblue, // light blue
   },
   snackBar: {
     bottom: 110,
@@ -180,7 +184,7 @@ export const styles = StyleSheet.create({
   },
   totalHoursText: {
     fontSize: 22,
-    marginTop: 5,
+    marginTop: 25,
     marginBottom: 5,
     marginLeft: 30,
     // color: "#112D4E",
@@ -220,5 +224,36 @@ export const styles = StyleSheet.create({
     borderRadius: 4,
     overflow: "hidden",
     // color: "#112D4E",
+  },
+  shareButton: {
+    backgroundColor: darkblue,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 60,
+  },
+  shareButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+
+  topRightIcon: {
+    position: "absolute",
+    // top: 5,
+    right: 20,
+    color: darkblue,
+    // marginRight: 10,
+  },
+
+  flexTime: {
+    fontSize: 40,
+    fontWeight: "bold",
+  },
+  positive: {
+    color: "green",
+  },
+  negative: {
+    color: "red",
   },
 });

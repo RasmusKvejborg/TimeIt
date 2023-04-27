@@ -546,7 +546,7 @@ export default function HomeScreen({ navigation }) {
             multiline={true}
           />
 
-          <TouchableOpacity // submit button
+          <TouchableOpacity // submit / save button
             onPress={() => {
               Keyboard.dismiss();
               var startTime = chooseStartTime;
@@ -558,7 +558,8 @@ export default function HomeScreen({ navigation }) {
               var projectName = projectText;
               var note = noteText;
 
-              // deleteList();
+              // // deleteList();
+              // const activityNumIsANumber = typeof activityNum === "number"; // if its not a number, then it is flexhours (the only way I could to that easily at the time)
 
               if (startTime === undefined || endTime === undefined) {
                 Alert.alert("Please fill out all required fields ");
@@ -580,9 +581,8 @@ export default function HomeScreen({ navigation }) {
                 );
 
                 hasBeenOnboarded
-                  ? saveFunction(registration)
-                  : // if its not the first time, it just calls the saveFunction
-                    Alert.alert(
+                  ? saveFunction(registration) // if its not the first time, it just calls the saveFunction
+                  : Alert.alert(
                       "Welcome",
                       "NB: Your hours are NOT sent until you connect to e-conomic. \n\nYou can do this in the 'Check & Send' tab.",
                       [

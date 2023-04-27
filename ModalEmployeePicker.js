@@ -15,9 +15,9 @@ const HEIGHT = Dimensions.get("window").height;
 const ModalEmployeePicker = (props) => {
   const { isVisible, employees } = props;
 
-  const onPressItem = (option) => {
+  const onPressItem = (number, name) => {
     props.setIsModalVisible(false);
-    props.setEmployeeData(option);
+    props.setEmployeeData(number, name);
   };
 
   // ----------------------------------
@@ -47,7 +47,7 @@ const ModalEmployeePicker = (props) => {
                     "number: ",
                     empl.number
                   );
-                  onPressItem(empl.number);
+                  onPressItem(empl.number, empl.name);
                 },
               },
             ]
