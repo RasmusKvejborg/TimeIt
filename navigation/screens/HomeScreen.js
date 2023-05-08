@@ -45,6 +45,18 @@ export default function HomeScreen({ navigation }) {
   const [hasBeenOnboarded, setHasBeenOnboarded] = React.useState(false);
 
   const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
+  const [employeeNumber, setEmployeeNumber] = React.useState();
+
+  const textInputFlexRef = React.useRef();
+  const [flexHoursString, setFlexHoursString] = React.useState(0);
+
+  // ----------------------- break stuff ---------------------------
+  const breakOptionsText = ["No break", "15", "30", "45", "60"];
+  const [selectedBreakOption, setSelectedBreakOption] = React.useState(
+    breakOptionsText[0]
+  );
+  const [breakInHours, setBreakInhours] = React.useState(0);
+
   // -------------------- consts for snackBar -------------------------------
   const [snackBarVisible, setSnackBarVisible] = React.useState(false);
 
@@ -85,6 +97,8 @@ export default function HomeScreen({ navigation }) {
   const [chooseEndTime, setChooseEndTime] = React.useState();
   const [startOrEndTimeSelected, setSstartOrEndTimeSelected] = React.useState();
   const [calcHoursShown, setCalcHoursShown] = React.useState();
+
+  const [hoursShown, setHoursShown] = React.useState();
 
   const changeModalVisibility = (bool, value) => {
     setIsModalVisible(bool);
@@ -216,6 +230,8 @@ export default function HomeScreen({ navigation }) {
         console.log(e);
         const { status, data, config } = e.response;
 
+        console.log("status23: ", status);
+
         if (status === 401) {
           Alert.alert(
             "401 error",
@@ -247,11 +263,27 @@ export default function HomeScreen({ navigation }) {
 
   //  --------------------get projects ------------------------------
 
+  // const getProjects = () => {
+  //   return axios
+  //     .get("https://apis.e-conomic.com/api/v16.3.0/projects/all", config)
+  //     .then((result) => {
+  //       const projectNamesAndNumbers = result.data.items.map((project) => ({
+  //         name: project.name,
+  //         number: project.number,
+  //       }));
+
+  //       return projectNamesAndNumbers;
+  //     });
+  // };
+
   const getProjects = () => {
     return axios
-      .get("https://apis.e-conomic.com/api/v16.3.0/projects/all", config)
+      .get(
+        `https://apis.e-conomic.com/api/v17.0.2/projects/allowed?employeeNumber=${employeeNumber}`,
+        config
+      )
       .then((result) => {
-        const projectNamesAndNumbers = result.data.items.map((project) => ({
+        const projectNamesAndNumbers = result.data.map((project) => ({
           name: project.name,
           number: project.number,
         }));
@@ -278,6 +310,12 @@ export default function HomeScreen({ navigation }) {
             // ,
             // "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
           );
+        }
+        if (status === 400) {
+          Alert.alert(
+            "400 error",
+            "This might be because you haven't selected your employee name yet. Go to 'Check & Send' and press 'Send to e-conomic' to select your employee name"
+          );
         } else {
           Alert.alert(
             "Something went wrong. Try again later or contact support"
@@ -294,6 +332,12 @@ export default function HomeScreen({ navigation }) {
         setXAgreementGrantToken(await AsyncStorage.getItem("@xAppSecretToken"));
     };
 
+    const setSavedEmployeeImmediately = async () => {
+      const employeeData = JSON.parse(await AsyncStorage.getItem("@Employee"));
+      if (employeeData) {
+        setEmployeeNumber(employeeData.number);
+      }
+    };
     // Useeffect getting Last used Activity from storage:
     const setSavedActivityImmediately = async () => {
       const lastActivity = JSON.parse(
@@ -310,6 +354,7 @@ export default function HomeScreen({ navigation }) {
       }
     };
     setSavedActivityImmediately();
+    setSavedEmployeeImmediately();
 
     // Useeffect getting Last used Project from storage:
     const setSavedProjectImmediately = async () => {
@@ -337,6 +382,7 @@ export default function HomeScreen({ navigation }) {
 
     let listener = navigation.addListener("focus", () => {
       setXAppSecretTokenImmediately();
+      setSavedEmployeeImmediately();
     });
 
     return () => {
@@ -376,8 +422,42 @@ export default function HomeScreen({ navigation }) {
   React.useEffect(() => {
     chooseEndTime &&
       chooseStartTime &&
+      // (setSelectedBreakOption(breakOptionsText[0]), // setting the break to zero if times has changed.
       setCalcHoursShown(calculateHours(chooseStartTime, chooseEndTime));
+    // );
   }, [chooseEndTime, chooseStartTime]);
+
+  React.useEffect(() => {
+    calcHoursShown && setHoursShown(calcHoursShown - breakInHours);
+  }, [calcHoursShown, breakInHours]);
+
+  // --------------- breakOptions -----------------------------
+
+  const handleOptionSelect = (item) => {
+    setSelectedBreakOption(item);
+    if (item === "No break") {
+      setBreakInhours(0);
+    } else {
+      setBreakInhours(item / 60);
+    }
+  };
+
+  const breakOptions = breakOptionsText.map((item, index) => {
+    const isSelected = selectedBreakOption === item;
+
+    return (
+      <TouchableOpacity key={index} onPress={() => handleOptionSelect(item)}>
+        <Text
+          style={[
+            styles.breakInput,
+            isSelected && { backgroundColor: "#BCC8DB", borderWidth: 2 },
+          ]}
+        >
+          {item}
+        </Text>
+      </TouchableOpacity>
+    );
+  });
 
   // -////////////////////////////////////////////////////////////////////-------------- return() ----------------------//////////////////////////////////////////////////////--
   return (
@@ -401,11 +481,11 @@ export default function HomeScreen({ navigation }) {
             marginBottom: 50,
           }}
         >
-          {/* <TouchableOpacity
-            onPress={() => console.log("handleapb", selectedDate.getDate())}
-          > */}
-          <Text style={styles.headlineText}>Register your hours</Text>
-          {/* </TouchableOpacity> */}
+          <TouchableOpacity
+            onPress={() => console.log(parseFloat(flexHoursString))}
+          >
+            <Text style={styles.headlineText}>Register your hours</Text>
+          </TouchableOpacity>
 
           <StatusBar style="auto" />
 
@@ -441,47 +521,71 @@ export default function HomeScreen({ navigation }) {
           )}
           {/* ----------------------- end of datepicker ---------------------------- */}
           {/* --------------------------- time picker: Start time ------------------------------ */}
-          {/* <Text>Enter start time</Text> */}
-          <TouchableOpacity
-            onPress={() => {
-              onDismissSnackBar();
-              changeModalVisibility(true, "startTime");
-            }}
-          >
-            <View pointerEvents="none">
-              <TextInput placeholder="Select start time" style={styles.input}>
-                {chooseStartTime}
-              </TextInput>
-            </View>
-          </TouchableOpacity>
 
-          {/* <Modal
-            transparent={true}
-            animationType="fade"
-            visible={isModalVisible}
-            onRequestClose={() => changeModalVisibility(false)}
-          ></Modal> */}
-          {/* --------------------------- time picker: End time ------------------------------ */}
+          {typeof activityNumber !== "string" && ( // this means if activity is Flex then down show start/end time, but show just one time
+            <View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    onDismissSnackBar();
+                    changeModalVisibility(true, "startTime");
+                  }}
+                >
+                  <View pointerEvents="none">
+                    <TextInput
+                      placeholder="Start time"
+                      style={[styles.input, { width: 145 }]}
+                    >
+                      {chooseStartTime}
+                    </TextInput>
+                  </View>
+                </TouchableOpacity>
+                {/* --------------------------- time picker: End time ------------------------------  */}
+                <TouchableOpacity
+                  onPress={() => {
+                    onDismissSnackBar();
+                    changeModalVisibility(true, "endTime");
+                  }}
+                >
+                  <View pointerEvents="none">
+                    <TextInput
+                      placeholder="End time"
+                      style={[styles.input, { width: 145 }]}
+                    >
+                      {chooseEndTime}
+                    </TextInput>
+                  </View>
+                </TouchableOpacity>
+              </View>
 
-          <TouchableOpacity
-            onPress={() => {
-              onDismissSnackBar();
-              changeModalVisibility(true, "endTime");
-            }}
-          >
-            <View pointerEvents="none">
-              <TextInput placeholder="Select end time" style={styles.input}>
-                {chooseEndTime}
-              </TextInput>
+              {chooseEndTime && chooseStartTime && (
+                <View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    {breakOptions}
+                  </View>
+
+                  <View>
+                    <Text style={styles.inBetweenHoursText}>
+                      {hoursShown == 1
+                        ? hoursShown + " hour"
+                        : hoursShown + " hours"}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
-          </TouchableOpacity>
-          {chooseEndTime && chooseStartTime && (
-            <Text style={styles.inBetweenHoursText}>
-              {calcHoursShown == 1
-                ? "(" + calcHoursShown + " hour)"
-                : calcHoursShown + " hours"}
-            </Text>
           )}
+
           <Modal
             transparent={true}
             animationType="fade"
@@ -513,6 +617,36 @@ export default function HomeScreen({ navigation }) {
               </View>
             </TouchableOpacity>
           )}
+
+          {/* show type in hours with a number only if activty if Optjent Flextid or Anvendt Flextid (which has ID "3" and "4" as strings) -------------------------------------------------------------------------------------------------- */}
+          {typeof activityNumber === "string" && (
+            <TouchableOpacity
+              onPress={() => {
+                if (textInputFlexRef.current) {
+                  textInputFlexRef.current.focus();
+                }
+              }}
+            >
+              <View
+                style={[
+                  styles.input,
+                  { flexDirection: "row", justifyContent: "center" },
+                ]}
+              >
+                <Text style={{ fontSize: 24 }}>Hours: </Text>
+                {/* <View style={{ width: 80 }}> */}
+                <TextInput
+                  style={{ fontSize: 24 }}
+                  placeholder="0"
+                  onChangeText={(text) => setFlexHoursString(text)}
+                  keyboardType={"numeric"}
+                  ref={textInputFlexRef}
+                ></TextInput>
+                {/* </View> */}
+              </View>
+            </TouchableOpacity>
+          )}
+
           {xAgreementGrantToken && (
             <TouchableOpacity
               onPress={() => {
@@ -536,11 +670,6 @@ export default function HomeScreen({ navigation }) {
             ref={(input) => {
               this.textInput = input;
             }}
-            // onFocus={() => {
-            //   setTimeout(() => {
-            //     this.scrollView.scrollToEnd();
-            //   }, 100);
-            // }}
             style={styles.noteInput}
             onChangeText={(text) => changeNoteHandler(text)}
             multiline={true}
@@ -558,43 +687,53 @@ export default function HomeScreen({ navigation }) {
               var projectName = projectText;
               var note = noteText;
 
-              // // deleteList();
               // const activityNumIsANumber = typeof activityNum === "number"; // if its not a number, then it is flexhours (the only way I could to that easily at the time)
+              var totalHours;
 
-              if (startTime === undefined || endTime === undefined) {
-                Alert.alert("Please fill out all required fields ");
+              // is activitynumber is a string, then it doesnt have starttime and endtime, just totalhours
+
+              if (typeof activityNumber === "string") {
+                totalHours = flexHoursString
+                  ? parseFloat(flexHoursString.replace(",", "."))
+                  : 0;
+                startTime = "";
+                endTime = "";
               } else {
-                var totalHours = calculateHours(chooseStartTime, chooseEndTime);
-
-                this.textInput.clear();
-                setNoteText("");
-                var registration = new Registration(
-                  startTime,
-                  endTime,
-                  dateTime,
-                  totalHours,
-                  activityNum,
-                  activityName,
-                  projectNum,
-                  projectName,
-                  note
-                );
-
-                hasBeenOnboarded
-                  ? saveFunction(registration) // if its not the first time, it just calls the saveFunction
-                  : Alert.alert(
-                      "Welcome",
-                      "NB: Your hours are NOT sent until you connect to e-conomic. \n\nYou can do this in the 'Check & Send' tab.",
-                      [
-                        {
-                          text: "OK",
-                          onPress: () => {
-                            saveFunction(registration);
-                          },
-                        },
-                      ]
-                    );
+                if (startTime === undefined || endTime === undefined) {
+                  Alert.alert("Please fill out all required fields ");
+                  return;
+                }
+                var totalHours = hoursShown;
               }
+
+              this.textInput.clear();
+              setNoteText("");
+              var registration = new Registration(
+                startTime,
+                endTime,
+                dateTime,
+                totalHours,
+                activityNum,
+                activityName,
+                projectNum,
+                projectName,
+                note
+              );
+
+              hasBeenOnboarded
+                ? saveFunction(registration) // if its not the first time, it just calls the saveFunction
+                : Alert.alert(
+                    "Welcome",
+                    "NB: Your hours are NOT sent until you connect to e-conomic. \n\nYou can do this in the 'Check & Send' tab.",
+                    [
+                      {
+                        text: "OK",
+                        onPress: () => {
+                          saveFunction(registration);
+                        },
+                      },
+                    ]
+                  );
             }}
           >
             <View>

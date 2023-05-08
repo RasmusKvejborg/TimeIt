@@ -65,6 +65,26 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
     color: darkblue,
   },
+  breakInput: {
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    textAlign: "center",
+    // width: 300,
+    // marginRight: 5,
+    fontSize: 23,
+    // marginBottom: 20,
+    backgroundColor: lightblue,
+    borderRadius: 10,
+    overflow: "hidden",
+    color: darkblue,
+  },
+  inBetweenHoursText: {
+    fontSize: 24,
+    alignSelf: "center",
+    margin: 10,
+    // marginTop: -20,
+    // marginBottom: 5,
+  },
   noteInput: {
     padding: 8,
     textAlign: "center",
@@ -189,13 +209,7 @@ export const styles = StyleSheet.create({
     marginLeft: 30,
     // color: "#112D4E",
   },
-  inBetweenHoursText: {
-    fontSize: 19,
-    alignSelf: "center",
-    marginTop: -20,
-    marginBottom: 5,
-    // color: "#112D4E",
-  },
+
   map: {
     width: "100%",
     height: "100%",

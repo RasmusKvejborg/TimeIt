@@ -718,7 +718,7 @@ export default function SendHoursScreen({ navigation }) {
             // deleteList();
             // deleteToken();
             // console.log(employeeName, employeeNo);
-            // deleteEmployee();
+            deleteEmployee();
             // deleteLastActivityAndProject();
             // saveXAgreementGrantToken(
             //   "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
