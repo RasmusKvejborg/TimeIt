@@ -484,7 +484,7 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity
             onPress={() => console.log(parseFloat(flexHoursString))}
           >
-            <Text style={styles.headlineText}>Register your hours</Text>
+            <Text style={styles.headlineText}>Register your hours.</Text>
           </TouchableOpacity>
 
           <StatusBar style="auto" />

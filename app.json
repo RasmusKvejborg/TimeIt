@@ -2,7 +2,7 @@
   "expo": {
     "name": "TimeIt Timeregistrering",
     "slug": "TimeIt",
-    "version": "1.0.6",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -21,7 +21,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.studsk.TimeIt",
-      "buildNumber": "6"
+      "buildNumber": "12"
     },
     "android": {
       "versionCode":6,

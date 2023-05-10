@@ -90,7 +90,7 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     width: 300,
     fontSize: 24,
-    marginBottom: 20,
+    // marginBottom: 10,
     backgroundColor: lightblue,
     borderRadius: 15,
     overflow: "hidden",

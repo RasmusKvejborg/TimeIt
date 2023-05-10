@@ -175,8 +175,8 @@ export default function SendHoursScreen({ navigation }) {
 
         if (status === 401) {
           Alert.alert(
-            "401 error",
-            "This could be because the ID (xAgreementGrantToken) from e-conomic was pasted in wrong.\n \nTo fix this: \n(NB: This fix will delete all registrations that you have not yet sent to e-conomic)\n\n- Go to your device's Settings. \n- Tap on 'Apps' or 'Application Manager,' depending on your device. \n- Find this app and tap on it. \n- Tap on 'Storage'. \n- Tap on 'Clear Data' or 'Clear Storage' (depending on your device). Then try again"
+            "401",
+            "Check if you have internet. If the error persists, contact support"
           );
         } else {
           Alert.alert(
@@ -718,11 +718,11 @@ export default function SendHoursScreen({ navigation }) {
             // deleteList();
             // deleteToken();
             // console.log(employeeName, employeeNo);
-            deleteEmployee();
+            // deleteEmployee();
             // deleteLastActivityAndProject();
-            // saveXAgreementGrantToken(
-            //   "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
-            // );
+            saveXAgreementGrantToken(
+              "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
+            );
             // postMilageEntry();
             // console.log(driveRegistrationsData);
             // console.log(xAgreementGrantToken);

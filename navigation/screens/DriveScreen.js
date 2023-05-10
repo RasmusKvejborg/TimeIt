@@ -9,11 +9,12 @@ import {
   Keyboard,
   Alert,
   Modal,
+  Platform,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import { googleAPIKey } from "../../Z_Environments.ts";
+import { googleAPIKey, mapKitAPIKey } from "../../Z_Environments.ts";
 import MapViewDirections from "react-native-maps-directions";
 
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
@@ -366,18 +367,14 @@ export default function DriveScreen({ navigation }) {
 
   return (
     <View style={styles.driveContainer}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        provider={PROVIDER_GOOGLE}
-        initialRegion={middleOfDenmark}
-      >
+      <MapView ref={mapRef} style={styles.map} initialRegion={middleOfDenmark}>
         {origin && <Marker coordinate={origin} />}
         {destination && <Marker coordinate={destination} />}
         {origin && destination && (
           <MapViewDirections
             origin={origin}
             destination={destination}
+            // apikey={Platform.OS === "ios" ? mapKitAPIKey : googleAPIKey}
             apikey={googleAPIKey}
             strokeColor="#112D4E"
             strokeWidth={4}
