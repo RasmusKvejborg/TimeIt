@@ -720,9 +720,9 @@ export default function SendHoursScreen({ navigation }) {
             // console.log(employeeName, employeeNo);
             // deleteEmployee();
             // deleteLastActivityAndProject();
-            saveXAgreementGrantToken(
-              "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
-            );
+            // saveXAgreementGrantToken(
+            //   "YMVOcbfrry6WtWcIgenGBsus7zAhduf6bc87WaqI81w1"
+            // );
             // postMilageEntry();
             // console.log(driveRegistrationsData);
             // console.log(xAgreementGrantToken);

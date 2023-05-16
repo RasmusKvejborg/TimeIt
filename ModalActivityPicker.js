@@ -24,7 +24,7 @@ const ModalActivityPicker = (props) => {
   const flexActivities = [
     { name: "Ferie", number: "1", key: 1 },
     { name: "Sygedag", number: "2", key: 2 },
-    { name: "Optjent Flextid", number: "3", key: 3 },
+    { name: "Optjent flextid", number: "3", key: 3 },
     { name: "Anvendt flextid", number: "4", key: 4 },
   ];
 
