@@ -4,8 +4,9 @@ import { StyleSheet, Dimensions } from "react-native";
 const WIDTH = Dimensions.get("window").width;
 const HEIGHT = Dimensions.get("window").height;
 
-const lightblue = "#DBE2EF";
-const darkblue = "#112D4E";
+const lightBlue = "#DBE2EF";
+const darkBlue = "#112D4E";
+const almostWhite = "#F9F7F7";
 
 export const styles = StyleSheet.create({
   container: {
@@ -25,7 +26,7 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 10,
     paddingHorizontal: 19,
-    backgroundColor: lightblue,
+    backgroundColor: lightBlue,
     borderRadius: 15,
     overflow: "hidden",
     width: WIDTH - 20,
@@ -36,7 +37,7 @@ export const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 10,
     paddingHorizontal: 19,
-    backgroundColor: lightblue,
+    backgroundColor: lightBlue,
     borderRadius: 15,
     overflow: "hidden",
     width: WIDTH - 20,
@@ -60,10 +61,10 @@ export const styles = StyleSheet.create({
     width: 300,
     fontSize: 24,
     marginBottom: 20,
-    backgroundColor: lightblue,
+    backgroundColor: lightBlue,
     borderRadius: 15,
     overflow: "hidden",
-    color: darkblue,
+    color: darkBlue,
   },
   breakInput: {
     paddingHorizontal: 7,
@@ -73,10 +74,10 @@ export const styles = StyleSheet.create({
     // marginRight: 5,
     fontSize: 23,
     // marginBottom: 20,
-    backgroundColor: lightblue,
+    backgroundColor: lightBlue,
     borderRadius: 10,
     overflow: "hidden",
-    color: darkblue,
+    color: darkBlue,
   },
   inBetweenHoursText: {
     fontSize: 24,
@@ -87,14 +88,14 @@ export const styles = StyleSheet.create({
   },
   noteInput: {
     padding: 8,
-    textAlign: "center",
+    textAlign: "left",
     width: 300,
     fontSize: 24,
     // marginBottom: 10,
-    backgroundColor: lightblue,
+    backgroundColor: lightBlue,
     borderRadius: 15,
     overflow: "hidden",
-    color: darkblue,
+    color: darkBlue,
     minHeight: 100,
     textAlignVertical: "top",
   },
@@ -106,8 +107,8 @@ export const styles = StyleSheet.create({
     padding: 8,
     width: 300,
     textAlign: "center",
-    backgroundColor: darkblue,
-    color: "#F9F7F7",
+    backgroundColor: darkBlue,
+    color: almostWhite,
   },
   driveButton: {
     // marginTop: 5,
@@ -119,8 +120,8 @@ export const styles = StyleSheet.create({
     // width: 80,
     textAlign: "center",
     alignSelf: "center",
-    backgroundColor: darkblue,
-    color: "#F9F7F7", //almost white
+    backgroundColor: darkBlue,
+    color: almostWhite,
   },
 
   buttonSendHours: {
@@ -132,20 +133,20 @@ export const styles = StyleSheet.create({
     borderRadius: 15,
     overflow: "hidden",
     paddingVertical: 8,
-    backgroundColor: darkblue,
-    color: "#F9F7F7",
+    backgroundColor: darkBlue,
+    color: almostWhite,
   },
   buttonAddActivityOrProject: {
     fontSize: 22,
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 3,
-    borderColor: darkblue,
+    borderColor: darkBlue,
     paddingHorizontal: 7,
     marginHorizontal: 5,
     textAlign: "center",
-    backgroundColor: "#F9F7F7",
-    color: darkblue,
+    backgroundColor: almostWhite,
+    color: darkBlue,
   },
   buttonConnectToEconomic: {
     width: WIDTH - 20,
@@ -157,12 +158,12 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
     paddingVertical: 8,
     borderWidth: 3,
-    borderColor: darkblue,
-    backgroundColor: "#F9F7F7",
-    color: darkblue,
+    borderColor: darkBlue,
+    backgroundColor: almostWhite,
+    color: darkBlue,
   },
   modal: {
-    backgroundColor: "#F9F7F7",
+    backgroundColor: almostWhite,
     borderRadius: 10,
     overflow: "hidden",
   },
@@ -178,8 +179,8 @@ export const styles = StyleSheet.create({
     marginHorizontal: 5,
     marginVertical: 7,
     fontSize: 22,
-    color: darkblue,
-    backgroundColor: lightblue,
+    color: darkBlue,
+    backgroundColor: lightBlue,
     // backgroundColor: "blue",
   },
   ActivityAndProjectPickerTextInside: {
@@ -190,8 +191,8 @@ export const styles = StyleSheet.create({
     marginHorizontal: 5,
     marginVertical: 7,
     fontSize: 22,
-    color: darkblue, // dark blue
-    backgroundColor: lightblue, // light blue
+    color: darkBlue, // dark blue
+    backgroundColor: lightBlue, // light blue
   },
   snackBar: {
     bottom: 110,
@@ -240,7 +241,7 @@ export const styles = StyleSheet.create({
     // color: "#112D4E",
   },
   shareButton: {
-    backgroundColor: darkblue,
+    backgroundColor: darkBlue,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -256,7 +257,7 @@ export const styles = StyleSheet.create({
     position: "absolute",
     // top: 5,
     right: 20,
-    color: darkblue,
+    color: darkBlue,
     // marginRight: 10,
   },
 

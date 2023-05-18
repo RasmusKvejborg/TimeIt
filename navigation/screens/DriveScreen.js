@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { styles } from "../../GlobalStyles.js";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { googleAPIKey, mapKitAPIKey } from "../../Z_Environments.ts";
 import MapViewDirections from "react-native-maps-directions";
@@ -22,6 +22,8 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { Snackbar } from "react-native-paper";
+
+import polyline from "@mapbox/polyline";
 
 const { width, height } = Dimensions.get("window");
 const aspectRatio = width / height;
@@ -39,6 +41,9 @@ export default function DriveScreen({ navigation }) {
   const [originAddress, setOriginAddress] = React.useState();
   const [destination, setDestination] = React.useState();
   const [destinationAddress, setDestinationAddress] = React.useState();
+
+  const [routes, setRoutes] = React.useState([]);
+  const [selectedRoute, setSelectedRoute] = React.useState(0);
 
   const [chooseDistance, setChooseDistance] = React.useState(0);
   const [swittchIsEnabled, setSwittchIsEnabled] = React.useState(false);
@@ -74,9 +79,9 @@ export default function DriveScreen({ navigation }) {
     }
   };
 
-  const edgePaddingValue = 15;
+  const edgePaddingValue = 10;
   const edgePadding = {
-    top: 285,
+    top: 260,
     right: edgePaddingValue,
     bottom: edgePaddingValue,
     left: edgePaddingValue,
@@ -141,16 +146,13 @@ export default function DriveScreen({ navigation }) {
       tempSearchHistoryList.splice(index, 1); // remove the object from position i
       tempSearchHistoryList.splice(0, 0, objectToMove); // insert the object at position j
     } else {
-      console.log("lengt: ", tempSearchHistoryList.length);
       if (tempSearchHistoryList.length >= 5) {
-        console.log("popped");
         tempSearchHistoryList.pop();
       }
       tempSearchHistoryList = [newObject, ...tempSearchHistoryList];
     }
 
     setSearchHistoryList(tempSearchHistoryList);
-    console.log("s ", tempSearchHistoryList);
 
     saveLastSearchHistory(tempSearchHistoryList);
 
@@ -165,7 +167,7 @@ export default function DriveScreen({ navigation }) {
 
   const calcDistanceOnReady = (args) => {
     if (args) {
-      setChooseDistance(Math.ceil(args.distance));
+      setChooseDistance(Math.ceil(args.distance / 1000));
     }
   };
 
@@ -173,7 +175,6 @@ export default function DriveScreen({ navigation }) {
     setSwittchIsEnabled((previousState) => !previousState);
     if (swittchIsEnabled) {
       console.log("button turned off");
-      console.log("selected onOFF date is", selectedDate);
     } else {
       console.log("button turned on");
     }
@@ -255,7 +256,7 @@ export default function DriveScreen({ navigation }) {
 
   const saveLastSearchHistory = async (searchHis) => {
     if (searchHis) {
-      console.log("searchhis", searchHis);
+      // console.log("searchhis", searchHis);
       await AsyncStorage.setItem(
         "@lastSearchHistory",
         JSON.stringify(searchHis)
@@ -313,6 +314,7 @@ export default function DriveScreen({ navigation }) {
   React.useEffect(() => {
     if (origin && destination) {
       zoomTwoPositions();
+      requestDirections();
     }
   }, [origin, destination]);
 
@@ -365,22 +367,117 @@ export default function DriveScreen({ navigation }) {
     };
   }, []);
 
+  //----------------------------------- test ----------////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  const requestDirections = async () => {
+    console.log("requestDirections has been called");
+    const originCoordinates = `${origin.latitude},${origin.longitude}`;
+    const destinationCoordinates = `${destination.latitude},${destination.longitude}`;
+
+    const directionsURL =
+      "https://maps.googleapis.com/maps/api/directions/json";
+    try {
+      const response = await fetch(
+        `${directionsURL}?origin=${originCoordinates}&destination=${destinationCoordinates}&mode=driving&alternatives=true&key=${googleAPIKey}`
+      );
+      const data = await response.json();
+
+      const tempRoutes = data.routes.map((route) => {
+        const distance = route.legs[0].distance.value;
+
+        const decodedPolyline = polyline.decode(route.overview_polyline.points);
+        const coordinates = decodedPolyline.map((point) => ({
+          latitude: point[0],
+          longitude: point[1],
+        }));
+        return { distance, coordinates };
+      });
+
+      calcDistanceOnReady(tempRoutes[0]);
+      setRoutes(tempRoutes);
+      setSelectedRoute(0);
+    } catch (error) {
+      console.error("Error requesting directions:", error);
+    }
+  };
+
+  // const displayRoutes = routes.map((route, index) => {
+  //   return (
+  //     <TouchableOpacity key={index}>
+  //       <View>
+  //         <Polyline
+  //           coordinates={route.coordinates}
+  //           strokeColor={index == selectedRoute ? "#112D4E" : "#96A0AF"}
+  //           strokeWidth={5}
+  //           zIndex={index == selectedRoute ? 2 : 1}
+  //           tappable={true}
+  //           onPress={() => {
+  //             setSelectedRoute(index);
+  //             calcDistanceOnReady(route);
+  //           }}
+  //         />
+  //       </View>
+  //     </TouchableOpacity>
+  //   );
+  // });
+
+  ////////////////////////////////
+
+  const displayRoutes = routes.map((route, index) => {
+    console.log("tjekker at index ikke er ", selectedRoute);
+    if (index !== selectedRoute) {
+      return (
+        <Polyline
+          key={index}
+          coordinates={route.coordinates}
+          strokeColor="#96A0AF"
+          strokeWidth={5}
+          tappable={true}
+          onPress={() => {
+            setSelectedRoute(index);
+            calcDistanceOnReady(route);
+            console.log("haysan", index);
+          }}
+        />
+      );
+    }
+  });
+
+  /////////////////////////////////////////
+
+  //////////////////////////
+
   return (
     <View style={styles.driveContainer}>
       <MapView ref={mapRef} style={styles.map} initialRegion={middleOfDenmark}>
         {origin && <Marker coordinate={origin} />}
         {destination && <Marker coordinate={destination} />}
-        {origin && destination && (
+
+        {routes.length > 0 && (
+          <>
+            {displayRoutes}
+
+            {routes[selectedRoute] && (
+              <Polyline
+                coordinates={routes[selectedRoute].coordinates}
+                strokeColor="#112D4E"
+                strokeWidth={5}
+                zIndex={1}
+              />
+            )}
+          </>
+        )}
+
+        {/* {origin && destination && (
           <MapViewDirections
             origin={origin}
             destination={destination}
-            // apikey={Platform.OS === "ios" ? mapKitAPIKey : googleAPIKey}
             apikey={googleAPIKey}
             strokeColor="#112D4E"
             strokeWidth={4}
             onReady={calcDistanceOnReady}
           />
-        )}
+        )} */}
       </MapView>
 
       <View style={styles.driveScreenSearchContainer}>
