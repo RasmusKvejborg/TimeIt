@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   View,
   Text,
+  Switch,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -21,7 +22,7 @@ import { ModalSettings } from "../../ModalSettings.js";
 
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
-import { getISOWeek } from "date-fns";
+import { getISOWeek, getOverlappingDaysInIntervals } from "date-fns";
 import * as WebBrowser from "expo-web-browser";
 import { postFirebase, getDataFromFirestore } from "../../PostToFireBase.js";
 
@@ -31,6 +32,8 @@ export default function SendHoursScreen({ navigation }) {
     []
   );
   const [oldData, setOldData] = React.useState([]);
+  const [showOldData, setShowOldData] = React.useState(false);
+
   const [appState, setAppState] = React.useState(null);
 
   // -------------------- consts for snackBar -------------------------------
@@ -147,6 +150,16 @@ export default function SendHoursScreen({ navigation }) {
     try {
       console.log("list deleted from asyncstorage");
       await AsyncStorage.removeItem("@registration");
+    } catch (err) {
+      console.log("error in deletion: ", err);
+    }
+  };
+
+  const deleteOldDataList = async () => {
+    setOldData();
+    try {
+      console.log("OldData deleted from asyncstorage");
+      await AsyncStorage.removeItem("@oldRegistrations");
     } catch (err) {
       console.log("error in deletion: ", err);
     }
@@ -321,7 +334,13 @@ export default function SendHoursScreen({ navigation }) {
         try {
           await Promise.all(promises);
           //  if success, then save oldData, but delete all registrations:
-          setOldData(registrationsData); // not saving any old drive registrations at the moment
+          // setOldData(registrationsData); // not saving any old drive registrations at the moment
+          saveOldData(registrationsData);
+
+          if (showOldData) {
+            toggleSwitch();
+          }
+
           setRegistrationsData([]);
           deleteList();
           onToggleHoursSentSnackBar();
@@ -500,6 +519,59 @@ export default function SendHoursScreen({ navigation }) {
 
         return namesAndNumbers;
       });
+  };
+
+  //------------------------------------------------------
+  const saveOldData = async (registrations) => {
+    try {
+      let prevItems = await AsyncStorage.getItem("@oldRegistrations");
+      let newItems = [];
+
+      if (prevItems !== null) {
+        newItems = JSON.parse(prevItems);
+        newItems.push(...registrations);
+
+        // newItems.sort((a, b) =>
+        //   a.date == b.date
+        //     ? a.startTime < b.startTime
+        //       ? 1
+        //       : -1
+        //     : a.date < b.date
+        //     ? 1
+        //     : -1
+        // ); // sorts the list datewise
+      } else {
+        newItems = registrations;
+      }
+
+      console.log("newItems", newItems);
+      const value = await AsyncStorage.setItem(
+        "@oldRegistrations",
+        JSON.stringify(newItems)
+      );
+    } catch (error) {
+      console.log("eRrOr MsG: ", error);
+    }
+  };
+
+  // -------switch for showing old data--------------
+  const toggleSwitch = async () => {
+    console.log("nå må den være falsk", showOldData);
+    setShowOldData((previousState) => !previousState);
+    if (showOldData) {
+      // this is counter-intuitive because of the asynchronous nature of state updates in React.
+      // I can use useEffect instead.
+      console.log("button turned off");
+      setOldData();
+    } else {
+      console.log("button turned on");
+
+      let toBeOldRegistrations = await AsyncStorage.getItem(
+        "@oldRegistrations"
+      );
+
+      toBeOldRegistrations && setOldData(JSON.parse(toBeOldRegistrations));
+    }
   };
 
   //  --------------------get projects ------------------------------
@@ -715,7 +787,7 @@ export default function SendHoursScreen({ navigation }) {
         <Text
           style={[styles.headlineText, { marginTop: 15 }]}
           onPress={() => {
-            // deleteList();
+            deleteOldDataList();
             // deleteToken();
             // console.log(employeeName, employeeNo);
             // deleteEmployee();
@@ -767,7 +839,7 @@ export default function SendHoursScreen({ navigation }) {
                     ? " (" + item.totalHours + " hour)"
                     : " (" + item.totalHours + " hours)"}
                   {/* ------------------------ note ------------------------ */}
-                  {item.note && ( // && means if truthy then return text
+                  {item.note && (
                     <Text style={styles.itemStyleSmallText}>
                       {"\n"}Note: {item.note}
                     </Text>
@@ -932,8 +1004,74 @@ export default function SendHoursScreen({ navigation }) {
               </View>
             );
           })}
+
+        {registrationsData.length === 0 ? (
+          <Text style={styles.totalHoursText}>No registrations to send</Text>
+        ) : (
+          <Text style={styles.totalHoursText}>
+            Total hours: {totalOfAllHours}
+          </Text>
+        )}
+
+        {/* showing oldData below... (driveregistrations isnt included) */}
+
+        <View
+          style={{
+            flexDirection: "row",
+            alignSelf: "center",
+          }}
+        >
+          <Text
+            style={styles.oldRegistrations}
+            onPress={() => {
+              toggleSwitch();
+            }}
+          >
+            Show old registrations
+          </Text>
+          <Switch onValueChange={toggleSwitch} value={showOldData}></Switch>
+        </View>
+
+        {/*  ------------------------- OLD REGISTRATIONS ------------------------------ */}
+        {oldData &&
+          oldData.map((item, pos) => {
+            var formattedDate = JSON.parse(item.date);
+            // totalOfAllHours += item.totalHours;
+            formattedDate = getDateText(new Date(formattedDate));
+            return (
+              <View style={styles.itemStyleOldData} key={pos}>
+                <Text style={styles.itemStyleLargeTextOldData}>
+                  {formattedDate}
+                  {"\n"}
+                  {item.startTime} - {item.endTime}
+                  {item.totalHours == 1
+                    ? " (" + item.totalHours + " hour)"
+                    : " (" + item.totalHours + " hours)"}
+                  {/* ------------------------ note ------------------------ */}
+                  {item.note && (
+                    <Text style={styles.itemStyleSmallTextOldData}>
+                      {"\n"}Note: {item.note}
+                    </Text>
+                  )}
+                  {
+                    <Text style={styles.itemStyleSmallTextOldData}>
+                      {"\n"}
+                      {item.activityName}
+                    </Text>
+                  }
+                  {
+                    <Text style={styles.itemStyleSmallTextOldData}>
+                      {" "}
+                      - {item.projectName}
+                    </Text>
+                  }
+                </Text>
+              </View>
+            );
+          })}
+
+        {/* showing oldData end*/}
       </ScrollView>
-      <Text style={styles.totalHoursText}>Total hours: {totalOfAllHours}</Text>
       <TouchableOpacity
         onPress={() => {
           if (xAgreementGrantToken) {

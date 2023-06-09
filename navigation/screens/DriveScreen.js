@@ -46,7 +46,7 @@ export default function DriveScreen({ navigation }) {
   const [selectedRoute, setSelectedRoute] = React.useState(0);
 
   const [chooseDistance, setChooseDistance] = React.useState(0);
-  const [swittchIsEnabled, setSwittchIsEnabled] = React.useState(false);
+  const [switchIsEnabled, setSwittchIsEnabled] = React.useState(false);
   // const [noteText, setNoteText] = React.useState();
   const [xAgreementGrantToken, setXAgreementGrantToken] = React.useState();
   // -------------------- consts for snackBar -------------------------------
@@ -173,7 +173,7 @@ export default function DriveScreen({ navigation }) {
 
   const toggleSwitch = () => {
     setSwittchIsEnabled((previousState) => !previousState);
-    if (swittchIsEnabled) {
+    if (switchIsEnabled) {
       console.log("button turned off");
     } else {
       console.log("button turned on");
@@ -267,7 +267,7 @@ export default function DriveScreen({ navigation }) {
   const saveFunction = async (registration) => {
     let registrationRoundTrip;
 
-    if (swittchIsEnabled) {
+    if (switchIsEnabled) {
       registrationRoundTrip = {
         dateTime: registration.dateTime,
         distance: registration.distance,
@@ -529,7 +529,7 @@ export default function DriveScreen({ navigation }) {
           ]}
         >
           <Text>
-            {swittchIsEnabled ? "Distance (km):  2x" : "Distance (km): "}
+            {switchIsEnabled ? "Distance (km):  2x" : "Distance (km): "}
           </Text>
           <TextInput
             style={{ width: 80, fontSize: 16 }}
@@ -541,7 +541,7 @@ export default function DriveScreen({ navigation }) {
           <Switch
             style={{ marginVertical: -8 }}
             onValueChange={toggleSwitch}
-            value={swittchIsEnabled}
+            value={switchIsEnabled}
           ></Switch>
         </View>
         {/*------- Project and Date inputfields -------*/}

@@ -32,6 +32,16 @@ export const styles = StyleSheet.create({
     width: WIDTH - 20,
     alignSelf: "center",
   },
+  itemStyleOldData: {
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 19,
+    backgroundColor: "#E5E5E5", // light grey
+    borderRadius: 15,
+    overflow: "hidden",
+    width: WIDTH - 20,
+    alignSelf: "center",
+  },
 
   driveItemStyle: {
     marginTop: 10,
@@ -50,6 +60,20 @@ export const styles = StyleSheet.create({
   itemStyleSmallText: {
     fontSize: 20,
   },
+  oldRegistrations: {
+    fontSize: 22,
+    color: "grey",
+    alignSelf: "center",
+  },
+  itemStyleLargeTextOldData: {
+    fontSize: 24,
+    color: "grey",
+  },
+  itemStyleSmallTextOldData: {
+    fontSize: 20,
+    color: "grey",
+  },
+
   trashCan: {
     position: "absolute",
     left: WIDTH - 70,
@@ -173,7 +197,7 @@ export const styles = StyleSheet.create({
   timePickerTextInside: {
     textAlign: "center",
     paddingVertical: 12,
-    width: WIDTH / 4 - 20,
+    width: WIDTH / 4 - 12,
     borderRadius: 14,
     overflow: "hidden",
     marginHorizontal: 5,
@@ -181,7 +205,6 @@ export const styles = StyleSheet.create({
     fontSize: 22,
     color: darkBlue,
     backgroundColor: lightBlue,
-    // backgroundColor: "blue",
   },
   ActivityAndProjectPickerTextInside: {
     paddingVertical: 12,
@@ -206,9 +229,8 @@ export const styles = StyleSheet.create({
   totalHoursText: {
     fontSize: 22,
     marginTop: 25,
-    marginBottom: 5,
-    marginLeft: 30,
-    // color: "#112D4E",
+    marginBottom: 20,
+    alignSelf: "center", // color: "#112D4E",
   },
 
   map: {

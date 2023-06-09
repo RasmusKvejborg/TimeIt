@@ -37,7 +37,9 @@ export default function HomeScreen({ navigation }) {
   const saveHasBeenOnboardedNow = () => {
     if (!hasBeenOnboarded) {
       AsyncStorage.setItem("@hasBeenOnboarded", "true");
-      console.log("HAS BEEEN unboarded now, happens only once");
+      console.log(
+        "HAS BEEEN onboarded now, happens only once. Its just a welcome screen"
+      );
       setHasBeenOnboarded(true);
     }
   };
@@ -283,6 +285,7 @@ export default function HomeScreen({ navigation }) {
         config
       )
       .then((result) => {
+        console.log(result);
         const projectNamesAndNumbers = result.data.map((project) => ({
           name: project.name,
           number: project.number,
@@ -422,23 +425,27 @@ export default function HomeScreen({ navigation }) {
   React.useEffect(() => {
     chooseEndTime &&
       chooseStartTime &&
-      // (setSelectedBreakOption(breakOptionsText[0]), // setting the break to zero if times has changed.
       setCalcHoursShown(calculateHours(chooseStartTime, chooseEndTime));
     // );
   }, [chooseEndTime, chooseStartTime]);
 
   React.useEffect(() => {
-    calcHoursShown && setHoursShown(calcHoursShown - breakInHours);
+    if (calcHoursShown && breakInHours > calcHoursShown) {
+      setHoursShown(0);
+    } else setHoursShown(calcHoursShown - breakInHours);
   }, [calcHoursShown, breakInHours]);
 
   // --------------- breakOptions -----------------------------
 
   const handleOptionSelect = (item) => {
-    setSelectedBreakOption(item);
     if (item === "No break") {
       setBreakInhours(0);
+      setSelectedBreakOption(item);
     } else {
-      setBreakInhours(item / 60);
+      if (item <= calcHoursShown * 60) {
+        setBreakInhours(item / 60);
+        setSelectedBreakOption(item);
+      }
     }
   };
 
@@ -484,7 +491,7 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity
             onPress={() => console.log(parseFloat(flexHoursString))}
           >
-            <Text style={styles.headlineText}>Register your hours.</Text>
+            <Text style={styles.headlineText}>Register your hours</Text>
           </TouchableOpacity>
 
           <StatusBar style="auto" />
