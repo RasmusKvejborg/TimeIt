@@ -493,6 +493,7 @@ export default function HomeScreen({ navigation }) {
           >
             <Text style={styles.headlineText}>Register your hours</Text>
           </TouchableOpacity>
+          <Text style={styles.line} />
 
           <StatusBar style="auto" />
 

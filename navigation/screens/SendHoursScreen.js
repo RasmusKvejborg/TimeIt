@@ -22,6 +22,9 @@ import { ModalSettings } from "../../ModalSettings.js";
 
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
+
+// import { TestOlddata } from "../../TestOldData.js"
+
 import { getISOWeek, getOverlappingDaysInIntervals } from "date-fns";
 import * as WebBrowser from "expo-web-browser";
 import { postFirebase, getDataFromFirestore } from "../../PostToFireBase.js";
@@ -33,6 +36,8 @@ export default function SendHoursScreen({ navigation }) {
   );
   const [oldData, setOldData] = React.useState([]);
   const [showOldData, setShowOldData] = React.useState(false);
+  let previousWeek = null;
+  let totalWeekHours = 0;
 
   const [appState, setAppState] = React.useState(null);
 
@@ -131,9 +136,28 @@ export default function SendHoursScreen({ navigation }) {
   const fetchValues = () => {
     AsyncStorage.getItem("@registration").then((_data) => {
       const data = _data && JSON.parse(_data);
+
+      //------------
+
+      // console.log("data444", data);
+
       if (data) {
-        setRegistrationsData(data);
+        const dataWithDateObject = data.map((item) => {
+          var formattedDate = JSON.parse(item.date);
+          formattedDate = getDateText(new Date(formattedDate));
+
+          return {
+            ...item,
+            formattedDate: formattedDate,
+          };
+        });
+        console.log("dataWithDateObject", dataWithDateObject);
+        setRegistrationsData(dataWithDateObject);
       }
+
+      // if (data) {
+      //   setRegistrationsData(data);
+      // }
     });
   };
 
@@ -156,7 +180,7 @@ export default function SendHoursScreen({ navigation }) {
   };
 
   const deleteOldDataList = async () => {
-    setOldData();
+    setOldData([]);
     try {
       console.log("OldData deleted from asyncstorage");
       await AsyncStorage.removeItem("@oldRegistrations");
@@ -531,15 +555,15 @@ export default function SendHoursScreen({ navigation }) {
         newItems = JSON.parse(prevItems);
         newItems.push(...registrations);
 
-        // newItems.sort((a, b) =>
-        //   a.date == b.date
-        //     ? a.startTime < b.startTime
-        //       ? 1
-        //       : -1
-        //     : a.date < b.date
-        //     ? 1
-        //     : -1
-        // ); // sorts the list datewise
+        newItems.sort((a, b) =>
+          a.date == b.date
+            ? a.startTime < b.startTime
+              ? 1
+              : -1
+            : a.date < b.date
+            ? 1
+            : -1
+        ); // sorts the list datewise
       } else {
         newItems = registrations;
       }
@@ -556,19 +580,20 @@ export default function SendHoursScreen({ navigation }) {
 
   // -------switch for showing old data--------------
   const toggleSwitch = async () => {
-    console.log("nå må den være falsk", showOldData);
     setShowOldData((previousState) => !previousState);
     if (showOldData) {
       // this is counter-intuitive because of the asynchronous nature of state updates in React.
       // I can use useEffect instead.
       console.log("button turned off");
-      setOldData();
+      setOldData([]);
     } else {
       console.log("button turned on");
 
       let toBeOldRegistrations = await AsyncStorage.getItem(
         "@oldRegistrations"
       );
+
+      console.log("toBeOldRegistrations", toBeOldRegistrations);
 
       toBeOldRegistrations && setOldData(JSON.parse(toBeOldRegistrations));
     }
@@ -667,14 +692,20 @@ export default function SendHoursScreen({ navigation }) {
 
     let today = new Date();
     let yearOrWeek = "";
+    let week = getISOWeek(date);
+    let thisYear = date.getFullYear() === today.getFullYear();
 
-    if (date.getFullYear() === today.getFullYear()) {
-      yearOrWeek = `(week ${getISOWeek(date)})`;
+    if (thisYear) {
+      yearOrWeek = `(week ${week})`;
     } else {
       yearOrWeek = date.getFullYear();
     }
 
-    return `${date.getDate()} ${monthName} ${yearOrWeek}`;
+    return {
+      text: `${date.getDate()} ${monthName} ${yearOrWeek}`,
+      week: week,
+      thisYear: thisYear,
+    };
   }
 
   let totalOfAllHours = 0;
@@ -786,8 +817,27 @@ export default function SendHoursScreen({ navigation }) {
 
         <Text
           style={[styles.headlineText, { marginTop: 15 }]}
-          onPress={() => {
-            deleteOldDataList();
+          onPress={async () => {
+            // deleteOldDataList();
+
+            const value = await AsyncStorage.setItem(
+              "@oldRegistrations",
+              JSON.stringify([
+                {
+                  activity: 2,
+                  activityName: "Konsulenttimer",
+                  date: '"2023-06-12T13:00:40.606Z"',
+                  endTime: "11:30",
+                  note: "",
+                  project: 2,
+                  projectName: "AndetProjekt",
+                  startTime: "07:15",
+                  totalHours: 4.25,
+                },
+              ])
+            );
+            // deletelist()
+            // saveOldData(testOldData);
             // deleteToken();
             // console.log(employeeName, employeeNo);
             // deleteEmployee();
@@ -816,21 +866,17 @@ export default function SendHoursScreen({ navigation }) {
         >
           Send your hours
         </Text>
+        <Text style={styles.line} />
 
         {/* sendhourscontainer, itemstyle, itemstylelargetext */}
         {registrationsData &&
           registrationsData.map((item, pos) => {
-            var formattedDate = JSON.parse(item.date);
-            //   .slice(0, 10)
-            //   .split("-")
-            //   .reverse()
-            //   .join("/");
             totalOfAllHours += item.totalHours;
-            formattedDate = getDateText(new Date(formattedDate));
+
             return (
               <View style={styles.itemStyle} key={pos}>
                 <Text style={styles.itemStyleLargeText}>
-                  {formattedDate}
+                  {item.formattedDate.text}
                   {"\n"}
                   {item.startTime} - {item.endTime}
                   {/* hours:{" "}
@@ -931,7 +977,7 @@ export default function SendHoursScreen({ navigation }) {
             return (
               <View style={styles.itemStyle} key={pos}>
                 <Text style={styles.itemStyleLargeText}>
-                  {formattedDate}
+                  {formattedDate.text}
                   {"\n"}
                   <Ionicons name="car-outline" size={30}></Ionicons>{" "}
                   {item.distance} km
@@ -1006,7 +1052,7 @@ export default function SendHoursScreen({ navigation }) {
           })}
 
         {registrationsData.length === 0 ? (
-          <Text style={styles.totalHoursText}>No registrations to send</Text>
+          <Text style={styles.totalHoursText}>No new registrations</Text>
         ) : (
           <Text style={styles.totalHoursText}>
             Total hours: {totalOfAllHours}
@@ -1033,41 +1079,67 @@ export default function SendHoursScreen({ navigation }) {
         </View>
 
         {/*  ------------------------- OLD REGISTRATIONS ------------------------------ */}
-        {oldData &&
+        {oldData.length === 0 && showOldData && (
+          <Text style={styles.oldRegistrations}>
+            No old registrations. They will be saved next time you send some
+            registrations.
+          </Text>
+        )}
+
+        {oldData.length > 0 &&
           oldData.map((item, pos) => {
-            var formattedDate = JSON.parse(item.date);
-            // totalOfAllHours += item.totalHours;
-            formattedDate = getDateText(new Date(formattedDate));
-            return (
-              <View style={styles.itemStyleOldData} key={pos}>
-                <Text style={styles.itemStyleLargeTextOldData}>
-                  {formattedDate}
-                  {"\n"}
-                  {item.startTime} - {item.endTime}
-                  {item.totalHours == 1
-                    ? " (" + item.totalHours + " hour)"
-                    : " (" + item.totalHours + " hours)"}
-                  {/* ------------------------ note ------------------------ */}
-                  {item.note && (
-                    <Text style={styles.itemStyleSmallTextOldData}>
-                      {"\n"}Note: {item.note}
+            if (item.formattedDate) {
+              const isLastItemOfThisWeek =
+                pos === oldData.length - 1 || // also true if its the last item
+                item.formattedDate.week !== oldData[pos + 1].formattedDate.week; // if previoutweek is null, then set it to false
+
+              totalWeekHours += item.totalHours;
+
+              let shownTotalWeekHours = totalWeekHours;
+
+              if (isLastItemOfThisWeek) {
+                totalWeekHours = 0;
+              }
+
+              return (
+                <View key={pos}>
+                  <View style={styles.itemStyleOldData}>
+                    <Text style={styles.itemStyleLargeTextOldData}>
+                      {item.formattedDate.text}
+                      {"\n"}
+                      {item.startTime} - {item.endTime}
+                      {item.totalHours == 1
+                        ? " (" + item.totalHours + " hour)"
+                        : " (" + item.totalHours + " hours)"}
+                      {/* ------------------------ note ------------------------ */}
+                      {item.note && (
+                        <Text style={styles.itemStyleSmallTextOldData}>
+                          {"\n"}Note: {item.note}
+                        </Text>
+                      )}
+                      {
+                        <Text style={styles.itemStyleSmallTextOldData}>
+                          {"\n"}
+                          {item.activityName}
+                        </Text>
+                      }
+                      {
+                        <Text style={styles.itemStyleSmallTextOldData}>
+                          {" "}
+                          - {item.projectName}
+                        </Text>
+                      }
+                    </Text>
+                  </View>
+                  {isLastItemOfThisWeek && item.formattedDate.thisYear && (
+                    <Text style={styles.totalOldHoursText}>
+                      Week {item.formattedDate.week} total hours:{" "}
+                      {shownTotalWeekHours}
                     </Text>
                   )}
-                  {
-                    <Text style={styles.itemStyleSmallTextOldData}>
-                      {"\n"}
-                      {item.activityName}
-                    </Text>
-                  }
-                  {
-                    <Text style={styles.itemStyleSmallTextOldData}>
-                      {" "}
-                      - {item.projectName}
-                    </Text>
-                  }
-                </Text>
-              </View>
-            );
+                </View>
+              );
+            }
           })}
 
         {/* showing oldData end*/}
@@ -1108,7 +1180,11 @@ export default function SendHoursScreen({ navigation }) {
         }}
       >
         {xAgreementGrantToken ? (
-          <Text style={styles.buttonSendHours}>Send to e-conomic</Text>
+          employeeNo ? (
+            <Text style={styles.buttonSendHours}>Send to e-conomic</Text>
+          ) : (
+            <Text style={styles.buttonSendHours}>Select employee</Text>
+          )
         ) : (
           <Text style={styles.buttonConnectToEconomic}>
             Connect to e-conomic

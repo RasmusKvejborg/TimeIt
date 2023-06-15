@@ -222,13 +222,27 @@ export const styles = StyleSheet.create({
   },
   headlineText: {
     fontSize: 22,
-    marginBottom: 20,
+    marginBottom: 5,
     alignSelf: "center",
-    // color: "#112D4E",
   },
+  line: {
+    marginBottom: 10,
+    height: 1,
+    backgroundColor: darkBlue,
+    width: 300,
+    alignSelf: "center",
+  },
+
   totalHoursText: {
     fontSize: 22,
     marginTop: 25,
+    marginBottom: 20,
+    alignSelf: "center", // color: "#112D4E",
+  },
+  totalOldHoursText: {
+    color: "grey",
+    fontSize: 22,
+    marginTop: 10,
     marginBottom: 20,
     alignSelf: "center", // color: "#112D4E",
   },
