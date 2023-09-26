@@ -33,6 +33,8 @@ export default function HomeScreen({ navigation }) {
     setNoteText(val);
   };
 
+  const [isSaving, setIsSaving] = React.useState(false);
+
   // ----------- onboarding--------------
   const saveHasBeenOnboardedNow = () => {
     if (!hasBeenOnboarded) {
@@ -178,7 +180,7 @@ export default function HomeScreen({ navigation }) {
   // ------------------
 
   const saveFunction = async (registration) => {
-    console.log("regi", registration);
+    // console.log("regi", registration);
     try {
       let prevItems = await AsyncStorage.getItem("@registration");
       let newItems = [];
@@ -187,15 +189,24 @@ export default function HomeScreen({ navigation }) {
         newItems = JSON.parse(prevItems);
         newItems.push(registration);
 
-        newItems.sort((a, b) =>
-          a.date == b.date
+        newItems.sort((a, b) => {
+          // a.date == b.date
+          //   ? a.startTime < b.startTime
+          //     ? 1
+          //     : -1
+          //   : a.date < b.date
+          //   ? 1
+          //   : -1
+
+          // -------
+          return a.date === b.date
             ? a.startTime < b.startTime
               ? 1
               : -1
             : a.date < b.date
             ? 1
-            : -1
-        ); // sorts the list datewise
+            : -1;
+        }); // sorts the list datewise
       } else {
         newItems = [registration];
       }
@@ -489,7 +500,9 @@ export default function HomeScreen({ navigation }) {
           }}
         >
           <TouchableOpacity
-            onPress={() => console.log(parseFloat(flexHoursString))}
+          // onPress={() =>
+          //   console.log(parseFloat(flexHoursString))
+          // }
           >
             <Text style={styles.headlineText}>Register your hours</Text>
           </TouchableOpacity>
@@ -685,7 +698,11 @@ export default function HomeScreen({ navigation }) {
 
           <TouchableOpacity // submit / save button
             onPress={() => {
+              if (isSaving) return; // if issaving, do nothing
+
               Keyboard.dismiss();
+              setIsSaving(true);
+
               var startTime = chooseStartTime;
               var endTime = chooseEndTime;
               var dateTime = JSON.stringify(selectedDate);
@@ -742,10 +759,16 @@ export default function HomeScreen({ navigation }) {
                       },
                     ]
                   );
+              setTimeout(() => {
+                setIsSaving(false); // Reset isSaving to false after 2 seconds
+              }, 2000);
             }}
+            disabled={isSaving}
           >
             <View>
-              <Text style={styles.button}>Save</Text>
+              <Text style={styles.button}>
+                {isSaving ? "Saving..." : "Save"}
+              </Text>
             </View>
           </TouchableOpacity>
 

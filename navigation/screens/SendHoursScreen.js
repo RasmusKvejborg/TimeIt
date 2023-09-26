@@ -22,20 +22,28 @@ import { ModalSettings } from "../../ModalSettings.js";
 
 import { ModalActivityPicker } from "../../ModalActivityPicker.js";
 import { ModalProjectPicker } from "../../ModalProjectPicker.js";
+import { ModalEditRegistration } from "../../ModalEditRegistration.js";
 
 // import { TestOlddata } from "../../TestOldData.js"
 
-import { getISOWeek, getOverlappingDaysInIntervals } from "date-fns";
+import {
+  compareAsc,
+  getISOWeek,
+  getOverlappingDaysInIntervals,
+} from "date-fns";
 import * as WebBrowser from "expo-web-browser";
 import { postFirebase, getDataFromFirestore } from "../../PostToFireBase.js";
 
 export default function SendHoursScreen({ navigation }) {
+  let projectData = {};
   const [registrationsData, setRegistrationsData] = React.useState([]);
   const [driveRegistrationsData, setDriveRegistrationsData] = React.useState(
     []
   );
   const [oldData, setOldData] = React.useState([]);
   const [showOldData, setShowOldData] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+
   let previousWeek = null;
   let totalWeekHours = 0;
 
@@ -86,7 +94,9 @@ export default function SendHoursScreen({ navigation }) {
   // ------------------------ activity picker modal -----------------
   const [activityArray, setActivityArray] = React.useState([]);
   const [isActModalVisible, setIsActivityModalVisible] = React.useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = React.useState(false);
   const [itemKeyForAddingLater, setItemKeyForAddingLater] = React.useState();
+  const [noteForAddingLater, setNoteForAddingLater] = React.useState();
   const [projectFlag, setProjectFlag] = React.useState();
 
   // ------------------------ project picker modal -----------------
@@ -151,7 +161,7 @@ export default function SendHoursScreen({ navigation }) {
             formattedDate: formattedDate,
           };
         });
-        console.log("dataWithDateObject", dataWithDateObject);
+        // console.log("dataWithDateObject", dataWithDateObject);
         setRegistrationsData(dataWithDateObject);
       }
 
@@ -472,6 +482,13 @@ export default function SendHoursScreen({ navigation }) {
   };
 
   // ########################## activity and project addlater functions ########################
+  // -------------- editRegistration modal ---------------------------
+  const openModalEditRegistration = (key, note) => {
+    setItemKeyForAddingLater(key);
+    setNoteForAddingLater(note);
+    setIsEditModalVisible(true);
+  };
+
   // ------------------- get activities and show modal -----------------------------------------
   const openModalActivityPicker = async (key) => {
     setItemKeyForAddingLater(key);
@@ -548,6 +565,8 @@ export default function SendHoursScreen({ navigation }) {
   //------------------------------------------------------
   const saveOldData = async (registrations) => {
     try {
+      console.log("gggggggggggr");
+
       let prevItems = await AsyncStorage.getItem("@oldRegistrations");
       let newItems = [];
 
@@ -555,15 +574,21 @@ export default function SendHoursScreen({ navigation }) {
         newItems = JSON.parse(prevItems);
         newItems.push(...registrations);
 
-        newItems.sort((a, b) =>
-          a.date == b.date
-            ? a.startTime < b.startTime
-              ? 1
-              : -1
-            : a.date < b.date
-            ? 1
-            : -1
-        ); // sorts the list datewise
+        newItems.sort((a, b) => {
+          console.log(
+            "a.date:",
+            a.date,
+            "b.date: ",
+            b.date,
+            "a er størst:",
+            a.date > b.date
+          );
+          if (a.date == b.date) {
+            return a.startTime < b.startTime ? 1 : -1;
+          } else {
+            return a.date < b.date ? 1 : -1;
+          }
+        }); // sorts the list datewise
       } else {
         newItems = registrations;
       }
@@ -584,16 +609,16 @@ export default function SendHoursScreen({ navigation }) {
     if (showOldData) {
       // this is counter-intuitive because of the asynchronous nature of state updates in React.
       // I can use useEffect instead.
-      console.log("button turned off");
+      // console.log("button turned off");
       setOldData([]);
     } else {
-      console.log("button turned on");
+      // console.log("button turned on");
 
       let toBeOldRegistrations = await AsyncStorage.getItem(
         "@oldRegistrations"
       );
 
-      console.log("toBeOldRegistrations", toBeOldRegistrations);
+      // console.log("toBeOldRegistrations", toBeOldRegistrations);
 
       toBeOldRegistrations && setOldData(JSON.parse(toBeOldRegistrations));
     }
@@ -612,6 +637,19 @@ export default function SendHoursScreen({ navigation }) {
 
         return projectNamesAndNumbers;
       });
+  };
+
+  const saveNewNoteToRegistration = async (key, note) => {
+    let newDataToBeSet = registrationsData[key];
+    newDataToBeSet["note"] = note;
+
+    let alldata = [...registrationsData];
+    alldata[key] = newDataToBeSet;
+
+    setRegistrationsData(alldata);
+    if (alldata) {
+      await AsyncStorage.setItem("@registration", JSON.stringify(alldata));
+    }
   };
 
   const saveActivityToRegistration = async (
@@ -814,28 +852,26 @@ export default function SendHoursScreen({ navigation }) {
             size={32}
           ></Ionicons>
         </TouchableOpacity>
-
         <Text
           style={[styles.headlineText, { marginTop: 15 }]}
           onPress={async () => {
             // deleteOldDataList();
-
-            const value = await AsyncStorage.setItem(
-              "@oldRegistrations",
-              JSON.stringify([
-                {
-                  activity: 2,
-                  activityName: "Konsulenttimer",
-                  date: '"2023-06-12T13:00:40.606Z"',
-                  endTime: "11:30",
-                  note: "",
-                  project: 2,
-                  projectName: "AndetProjekt",
-                  startTime: "07:15",
-                  totalHours: 4.25,
-                },
-              ])
-            );
+            // const value = await AsyncStorage.setItem(
+            //   "@oldRegistrations",
+            //   JSON.stringify([
+            //     {
+            //       activity: 2,
+            //       activityName: "Konsulenttimer",
+            //       date: '"2023-06-12T13:00:40.606Z"',
+            //       endTime: "11:30",
+            //       note: "",
+            //       project: 2,
+            //       projectName: "AndetProjekt",
+            //       startTime: "07:15",
+            //       totalHours: 4.25,
+            //     },
+            //   ])
+            // );
             // deletelist()
             // saveOldData(testOldData);
             // deleteToken();
@@ -850,24 +886,11 @@ export default function SendHoursScreen({ navigation }) {
             // console.log(xAgreementGrantToken);
             // console.log(registrationsData);
             // getDataFromFirestore();
-            // postFirebase(
-            //            "1",
-            //   "sygedag",
-            //   "\"2023-04-26T16:44:15.722Z\"",
-            //   "note",
-            //   "Projectnumber",
-            //   "projectname",
-            //   "totalhours",
-            //   xAgreementGrantToken,
-            //   employeeName,
-            //   employeeNo
-            // );
           }}
         >
           Send your hours
         </Text>
         <Text style={styles.line} />
-
         {/* sendhourscontainer, itemstyle, itemstylelargetext */}
         {registrationsData &&
           registrationsData.map((item, pos) => {
@@ -879,17 +902,25 @@ export default function SendHoursScreen({ navigation }) {
                   {item.formattedDate.text}
                   {"\n"}
                   {item.startTime} - {item.endTime}
-                  {/* hours:{" "}
-                  {item.totalHours && item.totalHours} */}
                   {item.totalHours == 1
                     ? " (" + item.totalHours + " hour)"
                     : " (" + item.totalHours + " hours)"}
                   {/* ------------------------ note ------------------------ */}
-                  {item.note && (
+                  {item.note ? (
                     <Text style={styles.itemStyleSmallText}>
                       {"\n"}Note: {item.note}
                     </Text>
+                  ) : (
+                    <Text>{"\n"}</Text>
                   )}
+                  <Ionicons
+                    onPress={() => {
+                      openModalEditRegistration(pos, item.note);
+                    }}
+                    name="create-outline"
+                    size={24}
+                    color="#112D4E"
+                  ></Ionicons>
                   {/* ------------------------------ if activity and project exists ----------------------------- */}
                   {item.activityName && (
                     <Text style={styles.itemStyleSmallText}>
@@ -904,7 +935,7 @@ export default function SendHoursScreen({ navigation }) {
                     </Text>
                   )}
                 </Text>
-                {/*  if activity doesnt exists and XAGREEMENTTOKEN??? send hours has been pressed, then show button to add activity  */}
+                {/*  if activity doesnt exists and hours has been pressed, then show button to add activity  */}
 
                 {/* {xAgreementGrantToken&&( */}
                 {(!item.activityName || !item.projectName) && // this is just for removing the first text tag if any of them exists
@@ -967,9 +998,7 @@ export default function SendHoursScreen({ navigation }) {
               </View>
             );
           })}
-
         {/*--------------------------------------------- DRIVING --------------------------------------------- */}
-
         {driveRegistrationsData &&
           driveRegistrationsData.map((item, pos) => {
             var formattedDate = JSON.parse(item.dateTime);
@@ -1050,7 +1079,6 @@ export default function SendHoursScreen({ navigation }) {
               </View>
             );
           })}
-
         {registrationsData.length === 0 ? (
           <Text style={styles.totalHoursText}>No new registrations</Text>
         ) : (
@@ -1058,9 +1086,7 @@ export default function SendHoursScreen({ navigation }) {
             Total hours: {totalOfAllHours}
           </Text>
         )}
-
         {/* showing oldData below... (driveregistrations isnt included) */}
-
         <View
           style={{
             flexDirection: "row",
@@ -1077,7 +1103,6 @@ export default function SendHoursScreen({ navigation }) {
           </Text>
           <Switch onValueChange={toggleSwitch} value={showOldData}></Switch>
         </View>
-
         {/*  ------------------------- OLD REGISTRATIONS ------------------------------ */}
         {oldData.length === 0 && showOldData && (
           <Text style={styles.oldRegistrations}>
@@ -1090,15 +1115,47 @@ export default function SendHoursScreen({ navigation }) {
           oldData.map((item, pos) => {
             if (item.formattedDate) {
               const isLastItemOfThisWeek =
-                pos === oldData.length - 1 || // also true if its the last item
-                item.formattedDate.week !== oldData[pos + 1].formattedDate.week; // if previoutweek is null, then set it to false
+                pos === oldData.length - 1 ||
+                oldData[pos + 1]?.formattedDate?.week !==
+                  item.formattedDate.week;
 
               totalWeekHours += item.totalHours;
 
               let shownTotalWeekHours = totalWeekHours;
 
+              let shownprojectdata = projectData;
+
+              // Iterate over oldData to calculate the total hours for each project
+
+              const projectId = item.project;
+              const totalHours = item.totalHours;
+              2;
+              const projectName = item.projectName;
+
+              // Check if the project ID exists in the projectHours object
+              if (projectData.hasOwnProperty(projectId)) {
+                // If it exists, add the total hours to the existing accumulated hours
+                projectData[projectId].totalHours += totalHours;
+              } else {
+                // If it doesn't exist, initialize the accumulated hours with the current total hours
+                projectData[projectId] = {
+                  totalHours: totalHours,
+                  projectName: projectName,
+                };
+              }
+
+              console.log("projectHours", projectData);
+              // --------------------------------------------------
               if (isLastItemOfThisWeek) {
-                totalWeekHours = 0;
+                totalWeekHours = 0; // resets the totalWeekHours for next iteration
+              }
+
+              if (isLastItemOfThisWeek) {
+                // resets the totalWeekHours for next iteration
+                projectData = {};
+                console.log(
+                  "HAEEEEEEEEEEEEEEEEEEEEEEEEESSJMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
+                );
               }
 
               return (
@@ -1132,20 +1189,33 @@ export default function SendHoursScreen({ navigation }) {
                     </Text>
                   </View>
                   {isLastItemOfThisWeek && item.formattedDate.thisYear && (
-                    <Text style={styles.totalOldHoursText}>
-                      Week {item.formattedDate.week} total hours:{" "}
-                      {shownTotalWeekHours}
-                    </Text>
+                    <View>
+                      <Text style={styles.totalOldHoursText}>
+                        Week {item.formattedDate.week}:
+                      </Text>
+
+                      {Object.keys(shownprojectdata).map((projectId) => (
+                        <Text key={projectId} style={styles.totalOldHoursText}>
+                          {/* {projectId}  */}
+                          {shownprojectdata[projectId].projectName}:{" "}
+                          {shownprojectdata[projectId].totalHours} hours
+                        </Text>
+                      ))}
+
+                      <Text style={styles.totalOldHoursText}>
+                        Total hours: {shownTotalWeekHours}
+                      </Text>
+                    </View>
                   )}
                 </View>
               );
             }
           })}
-
         {/* showing oldData end*/}
       </ScrollView>
       <TouchableOpacity
         onPress={() => {
+          setIsSaving(true);
           if (xAgreementGrantToken) {
             employeeNo
               ? (postAllTimeEntries(), postAllDriveEntries())
@@ -1177,11 +1247,17 @@ export default function SendHoursScreen({ navigation }) {
               ]
             );
           }
+          setTimeout(() => {
+            setIsSaving(false); // Reset isSaving to false after 2 seconds
+          }, 2000);
         }}
+        disabled={isSaving}
       >
         {xAgreementGrantToken ? (
           employeeNo ? (
-            <Text style={styles.buttonSendHours}>Send to e-conomic</Text>
+            <Text style={styles.buttonSendHours}>
+              {isSaving ? "Sending..." : "Send to e-conomic"}
+            </Text>
           ) : (
             <Text style={styles.buttonSendHours}>Select employee</Text>
           )
@@ -1205,9 +1281,6 @@ export default function SendHoursScreen({ navigation }) {
           employeeNo={employeeNo}
           isVisible={isSettingsModalVisible}
           setIsModalVisible={setIsSettingsModalVisible}
-          // setEmployeeData={(number, name) => {
-          //   saveEmployee(number, name);
-          // }}
         ></ModalSettings>
       </Modal>
       {/* employee picker modal */}
@@ -1228,6 +1301,25 @@ export default function SendHoursScreen({ navigation }) {
       </Modal>
 
       {/* --------------project and activity picker for adding later --------------- */}
+      {/* edit modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={isEditModalVisible}
+        nRequestClose={() => setIsEditModalVisible(false)}
+      >
+        <ModalEditRegistration
+          itemKeyForAddingLater={itemKeyForAddingLater}
+          note={noteForAddingLater}
+          isVisible={isEditModalVisible}
+          setIsModalVisible={setIsEditModalVisible}
+          setNewNote={(note, key) => {
+            // saveActivityToRegistration(key, activity.name, activity.number);
+            saveNewNoteToRegistration(key, note);
+          }}
+        ></ModalEditRegistration>
+      </Modal>
+
       {/* Activity picker modal */}
       <Modal
         transparent={true}

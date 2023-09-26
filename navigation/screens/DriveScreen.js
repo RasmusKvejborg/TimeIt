@@ -401,28 +401,6 @@ export default function DriveScreen({ navigation }) {
     }
   };
 
-  // const displayRoutes = routes.map((route, index) => {
-  //   return (
-  //     <TouchableOpacity key={index}>
-  //       <View>
-  //         <Polyline
-  //           coordinates={route.coordinates}
-  //           strokeColor={index == selectedRoute ? "#112D4E" : "#96A0AF"}
-  //           strokeWidth={5}
-  //           zIndex={index == selectedRoute ? 2 : 1}
-  //           tappable={true}
-  //           onPress={() => {
-  //             setSelectedRoute(index);
-  //             calcDistanceOnReady(route);
-  //           }}
-  //         />
-  //       </View>
-  //     </TouchableOpacity>
-  //   );
-  // });
-
-  ////////////////////////////////
-
   const displayRoutes = routes.map((route, index) => {
     console.log("tjekker at index ikke er ", selectedRoute);
     if (index !== selectedRoute) {
@@ -442,8 +420,6 @@ export default function DriveScreen({ navigation }) {
       );
     }
   });
-
-  /////////////////////////////////////////
 
   //////////////////////////
 
@@ -467,17 +443,6 @@ export default function DriveScreen({ navigation }) {
             )}
           </>
         )}
-
-        {/* {origin && destination && (
-          <MapViewDirections
-            origin={origin}
-            destination={destination}
-            apikey={googleAPIKey}
-            strokeColor="#112D4E"
-            strokeWidth={4}
-            onReady={calcDistanceOnReady}
-          />
-        )} */}
       </MapView>
 
       <View style={styles.driveScreenSearchContainer}>
