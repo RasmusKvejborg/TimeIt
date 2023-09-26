@@ -243,8 +243,9 @@ export const styles = StyleSheet.create({
     color: "grey",
     fontSize: 22,
     marginTop: 10,
-    marginBottom: 20,
-    alignSelf: "center", // color: "#112D4E",
+    // marginBottom: 20,
+    marginLeft: 20,
+    // alignSelf: "center", // color: "#112D4E",
   },
 
   map: {

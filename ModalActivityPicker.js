@@ -28,7 +28,6 @@ const ModalActivityPicker = (props) => {
     { name: "Anvendt flextid", number: "4", key: 4 },
   ];
 
-  console.log("a ", activities);
   // ----------------------------------
 
   const activityOptions = activities.map((activity) => {

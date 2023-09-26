@@ -24,8 +24,6 @@ const ModalProjectPicker = (props) => {
   const { isVisible, projects, itemKeyForAddingLater, projectFlag } = props;
   const [mostUsedProjects, setMostUsedProjects] = React.useState([]);
 
-  console.log("sasj", projects);
-
   const onPressItem = (option) => {
     props.setIsModalVisible(false);
     if (option) {
